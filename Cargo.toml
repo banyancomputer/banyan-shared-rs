@@ -6,3 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# TODO: sort dependencies
+# TODO better error types than anyhow
+anyhow = "1.0"
+ethers = { git = "https://github.com/gakonst/ethers-rs" }
+bao = "0.12"
+# TODO do we really need all of sled just to get ivecs?
+sled = "0.34"
+cid = "0.8"
+serde = { version = "1", features = ["derive"] }
+tempfile = "3.3"
+tokio = { version = "1", features = ["full"] }

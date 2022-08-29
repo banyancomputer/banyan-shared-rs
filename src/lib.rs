@@ -1,6 +1,7 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub mod proofs;
+pub mod types;
+pub mod ipfs;
+pub mod eth;
 
 #[cfg(test)]
 mod tests {
@@ -8,7 +9,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+        unimplemented!("you need to write tests...");
     }
 }
