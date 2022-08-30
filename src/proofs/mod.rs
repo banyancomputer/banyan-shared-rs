@@ -16,7 +16,7 @@ fn get_num_chunks(size: u64) -> u64 {
 }
 
 /// returns tuple (chunk_offset, chunk_size) for the Nth bao hash that you need to grab :)
-fn compute_random_block_choice_from_hash(block_hash: H256, file_length: u64) -> (u64, u64) {
+pub fn compute_random_block_choice_from_hash(block_hash: H256, file_length: u64) -> (u64, u64) {
     let chunk_number = (block_hash.into_uint() % get_num_chunks(file_length)).as_u64();
     let chunk_offset = chunk_number * CHUNK_SIZE;
     let chunk_size = if chunk_number == get_num_chunks(file_length) - 1 {
