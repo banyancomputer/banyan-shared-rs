@@ -3,7 +3,7 @@ use cid::Cid;
 use std::fs::File;
 use std::io::BufReader;
 
-pub async fn write_file_to_ipfs(_file_handle: File) -> Result<Cid> {
+pub async fn write_bytes_to_ipfs(_bytes: Vec<u8>) -> Result<Cid> {
     unimplemented!("idk what the right way to do this is??");
 }
 
