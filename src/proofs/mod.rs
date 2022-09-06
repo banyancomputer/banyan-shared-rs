@@ -28,9 +28,10 @@ pub fn compute_random_block_choice_from_hash(block_hash: H256, file_length: u64)
 
 // TODO: eventually do not load the entire file into memory.
 pub fn gen_obao<R: Read>(mut reader: R) -> Result<(Vec<u8>, bao::Hash)> {
-
     let mut file_content = Vec::new();
-    reader.read_to_end(&mut file_content).expect("Unable to read");
+    reader
+        .read_to_end(&mut file_content)
+        .expect("Unable to read");
 
     let (obao, hash) = bao::encode::outboard(&file_content);
     Ok((obao, hash)) // return the outboard encoding

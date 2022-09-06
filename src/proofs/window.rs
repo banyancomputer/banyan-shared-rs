@@ -1,4 +1,4 @@
-use crate::types::{BlockNum, LocalDealInfo, OnChainDealInfo};
+use crate::types::{BlockNum, OnChainDealInfo};
 
 #[derive(Debug)]
 pub enum DealStatusError {
@@ -26,15 +26,18 @@ pub fn get_the_current_window(
 
 // TODO: check this it might not be correct. write some tests. from copilot. suspect this is wrong.
 /// Some(n) where n is the next window start block, or None if the deal is complete.
-pub fn get_the_next_window(deal_info: &LocalDealInfo) -> Option<BlockNum> {
-    let window_number = (deal_info.last_submission - deal_info.onchain.deal_start_block)
+pub fn get_the_next_window(
+    deal_info: &OnChainDealInfo,
+    last_submission: BlockNum,
+) -> Option<BlockNum> {
+    let window_number = (last_submission - deal_info.deal_start_block)
         .0
-        .div_euclid(deal_info.onchain.proof_frequency_in_blocks.0);
-    let elapsed_length = deal_info.onchain.proof_frequency_in_blocks * (window_number + 1);
-    if elapsed_length >= deal_info.onchain.deal_length_in_blocks {
+        .div_euclid(deal_info.proof_frequency_in_blocks.0);
+    let elapsed_length = deal_info.proof_frequency_in_blocks * (window_number + 1);
+    if elapsed_length >= deal_info.deal_length_in_blocks {
         None
     } else {
-        Some(deal_info.onchain.deal_start_block + elapsed_length)
+        Some(deal_info.deal_start_block + elapsed_length)
     }
 }
 

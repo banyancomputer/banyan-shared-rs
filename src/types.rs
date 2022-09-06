@@ -12,8 +12,8 @@ pub fn serialize_cid<S: Serializer>(cid: &Cid, s: S) -> Result<S::Ok, S::Error> 
 
 // fn<'de, D>(D) -> Result<T, D::Error> where D: Deserializer<'de>
 pub fn deserialize_cid<'de, D>(deserializer: D) -> Result<Cid, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     let cid_bytes = <&[u8]>::deserialize(deserializer)?;
     Cid::read_bytes(cid_bytes).map_err(|e| Error::custom(e.to_string()))
@@ -25,8 +25,8 @@ pub fn serialize_hash<S: Serializer>(hash: &bao::Hash, s: S) -> Result<S::Ok, S:
 }
 
 pub fn deserialize_hash<'de, D>(deserializer: D) -> Result<bao::Hash, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     let hash_bytes = <[u8; 32]>::deserialize(deserializer)?;
     Ok(bao::Hash::from(hash_bytes))
@@ -94,37 +94,10 @@ pub struct OnChainDealInfo {
     pub ipfs_file_cid: Cid,
     pub file_size: u64,
     #[serde(
-    serialize_with = "serialize_hash",
-    deserialize_with = "deserialize_hash"
+        serialize_with = "serialize_hash",
+        deserialize_with = "deserialize_hash"
     )]
     pub blake3_checksum: bao::Hash,
-}
-
-// #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-// pub enum DealStatus {
-//     Activated,
-//     Active,
-//     CompleteAwaitingFinalization,
-//     Cancelled, // TODO implement this functionality later
-//     Finalizing,
-// }
-
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum LocalDealStatus {
-    Active,
-    Cancelled,
-    WaitingToFinalize,
-    Finalize,
-    WithdrawEarnings,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct LocalDealInfo {
-    pub onchain: OnChainDealInfo,
-    #[serde(serialize_with = "serialize_cid", deserialize_with = "deserialize_cid")]
-    pub obao_cid: Cid,
-    pub last_submission: BlockNum,
-    pub deal_todo: LocalDealStatus,
 }
 
 pub struct Proof {
