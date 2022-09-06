@@ -101,7 +101,7 @@ pub struct OnChainDealInfo {
 }
 
 impl OnChainDealInfo {
-    fn get_final_block(&self) -> BlockNum {
+    pub fn get_final_block(&self) -> BlockNum {
         self.deal_start_block + self.deal_length_in_blocks
     }
 }
@@ -110,14 +110,3 @@ pub struct Proof {
     pub block_number: BlockNum,
     pub bao_proof_data: Vec<u8>,
 }
-
-/// TODO lmao this is so lame, please improve it
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum ProofBuddyError {
-    FatalPanic(String),
-    InformWebserver(String),
-    NonFatal(String),
-}
-
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Timestamp(u64);
