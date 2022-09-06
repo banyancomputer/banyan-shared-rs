@@ -3,7 +3,6 @@ use anyhow::{anyhow, Result};
 use ethers::prelude::H256;
 use ethers::providers::{Http, Middleware, Provider};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tokio::sync::Mutex;
 use tokio::time::{timeout, Duration};
 
@@ -15,24 +14,19 @@ pub enum ProofBuddyMessageType {
     WithdrawEarnings,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PendingTransactionID(Timestamp, DealID, ProofBuddyMessageType);
-
-pub struct VitalikProvider<'a> {
+pub struct VitalikProvider {
     provider: Mutex<Provider<Http>>,
-    my_pending_transactions:
-        HashMap<PendingTransactionID, ethers::providers::PendingTransaction<'a, Http>>,
+    // TODO: eventually we will need to handle if the provider falls over halfway through submitting a transaction.
+    //my_pending_transactions: HashMap<TxnHash, PendingTransaction<'a>>,
     timeout: Duration,
 }
 
-// TODO: handle the situation of how sometimes under congestion it takes TEN MINUTES TO SUBMIT A TRANSACTION!!! wtf
-
 // TODO: one day you ought to clean up the fact that you're wrapping everything in a timeout separately. there has to be a better way...
-impl VitalikProvider<'_> {
+impl VitalikProvider {
     pub fn new(url: String, timeout_seconds: u64) -> Result<Self> {
         Ok(Self {
             provider: Mutex::new(Provider::<Http>::try_from(url)?),
-            my_pending_transactions: HashMap::new(),
+            // my_pending_transactions: HashMap::new(),
             timeout: Duration::from_secs(timeout_seconds),
         })
     }
@@ -55,7 +49,6 @@ impl VitalikProvider<'_> {
         unimplemented!("write me ;)")
     }
 
-    // TODO: i should somehow handle if this proof has already been posted
     // the validator should be able to handle if proofs get sent twice on accident
     // return the block number that the proof made it into.
     pub async fn post_proof(&self, _deal_id: &DealID, _proof: Proof) -> Result<BlockNum> {
