@@ -16,6 +16,7 @@ pub enum ProofBuddyMessageType {
 
 pub struct VitalikProvider {
     provider: Mutex<Provider<Http>>,
+    // TODO: eventually we will need to handle if the provider falls over halfway through submitting a transaction.
     //my_pending_transactions: HashMap<TxnHash, PendingTransaction<'a>>,
     timeout: Duration,
 }
