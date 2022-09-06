@@ -100,6 +100,12 @@ pub struct OnChainDealInfo {
     pub blake3_checksum: bao::Hash,
 }
 
+impl OnChainDealInfo {
+    fn get_final_block(&self) -> BlockNum {
+        self.deal_start_block + self.deal_length_in_blocks
+    }
+}
+
 pub struct Proof {
     pub block_number: BlockNum,
     pub bao_proof_data: Vec<u8>,
