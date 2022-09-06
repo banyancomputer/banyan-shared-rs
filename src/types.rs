@@ -112,3 +112,6 @@ pub enum ProofBuddyError {
     InformWebserver(String),
     NonFatal(String),
 }
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Timestamp(u64);
