@@ -6,7 +6,6 @@ pub enum DealStatusError {
     Past,
 }
 
-// TODO: check this it might not be correct. write some tests. from copilot. suspect this is wrong.
 pub fn get_the_current_window(
     deal_info: &OnChainDealInfo,
     current_block_num: BlockNum,
@@ -24,7 +23,6 @@ pub fn get_the_current_window(
     Ok(deal_info.deal_start_block + deal_info.proof_frequency_in_blocks * window_number)
 }
 
-// TODO: check this it might not be correct. write some tests. from copilot. suspect this is wrong.
 /// Some(n) where n is the next window start block, or None if the deal is complete.
 pub fn get_the_next_window(
     deal_info: &OnChainDealInfo,

@@ -26,7 +26,6 @@ pub fn compute_random_block_choice_from_hash(block_hash: H256, file_length: u64)
     (chunk_offset, chunk_size)
 }
 
-// TODO: eventually do not load the entire file into memory.
 pub fn gen_obao<R: Read>(mut reader: R) -> Result<(Vec<u8>, bao::Hash)> {
     let mut file_content = Vec::new();
     reader
