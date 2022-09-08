@@ -2,6 +2,7 @@ use crate::types::*;
 use anyhow::{anyhow, Result};
 use ethers::prelude::H256;
 use ethers::providers::{Http, Middleware, Provider};
+use ethers::types::{Filter, Log};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tokio::time::{timeout, Duration};
@@ -42,6 +43,12 @@ impl VitalikProvider {
             .await??
             .ok_or_else(|| anyhow!("block not found"))?;
         block.hash.ok_or_else(|| anyhow!("block hash not found"))
+    }
+
+    pub async fn get_logs_from_filter(&self, filter: Filter) -> Result<Vec<Log>> {
+        let provider = self.provider.lock().await;
+        let logs = timeout(self.timeout, provider.get_logs(&filter)).await??;
+        Ok(logs)
     }
 
     pub async fn get_onchain(&self, _deal_id: DealID) -> Result<OnChainDealInfo> {

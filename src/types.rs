@@ -82,6 +82,14 @@ impl Mul<u64> for BlockNum {
     }
 }
 
+impl Mul<usize> for BlockNum {
+    type Output = Self;
+    fn mul(self, other: usize) -> Self {
+        let u = other as u64;
+        BlockNum(self.0 * u)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct TokenAmount(pub u64);
 
