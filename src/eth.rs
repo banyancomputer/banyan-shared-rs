@@ -1,8 +1,11 @@
 use crate::types::*;
 use anyhow::{anyhow, Result};
-use ethers::prelude::H256;
+use ethers::abi::Tokenize;
+use ethers::prelude::builders::ContractCall;
+use ethers::prelude::{H256, BaseContract, AbiError};
 use ethers::providers::{Http, Middleware, Provider};
-use ethers::types::{Filter, Log};
+use ethers::types::{Filter, Log, H160, U256};
+use ethers::contract::Contract;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tokio::time::{timeout, Duration};
@@ -13,6 +16,25 @@ pub enum ProofBuddyMessageType {
     Cancel,
     InitiateChainlinkFinalization,
     WithdrawEarnings,
+}
+
+pub struct VitalikContract {
+    contract: Mutex<Contract<Provider<Http>>>,
+    timeout: Duration
+}
+
+impl VitalikContract {
+    pub fn new(address: H160, abi: impl Into<BaseContract>, client: Provider<Http>, timeout_seconds: u64) -> Result<Self> {
+        Ok(Self {
+            contract: Mutex::new(Contract::new(address, abi, client)),
+            timeout: Duration::from_secs(timeout_seconds),
+        })
+    }
+
+    pub async fn method(&self, name: &str, args: impl Tokenize) -> Result<ContractCall<Provider<Http>, U256>, AbiError> {
+        let contract = self.contract.lock().await;
+        contract.method::<_, _>(name, args)
+    }
 }
 
 pub struct VitalikProvider {
