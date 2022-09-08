@@ -1,0 +1,253 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewOffer",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "executorAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealLength",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proofFrequency",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "bounty",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateral",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fileSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "cid",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "blake3",
+        "type": "string"
+      }
+    ],
+    "name": "startOffer",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "_deals",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "dealStartBlock",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealLengthInBlocks",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proofFrequencyInBlocks",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateral",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "erc20TokenDenomination",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "ipfsFileCID",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fileSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "blake3Checksum",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      },
+      {
+        "internalType": "enum Test.OfferStatus",
+        "name": "offerStatus",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_dealId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDealStatus",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getOffer",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealStartBlock",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealLengthInBlocks",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proofFrequencyInBlocks",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateral",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "cid",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fileSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "blake3",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

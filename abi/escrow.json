@@ -1,0 +1,1274 @@
+[
+  {
+    "inputs": [],
+    "name": "AUTHORITY_INITIALIZED",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UNAUTHORIZED",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ChainlinkCancelled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ChainlinkFulfilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ChainlinkRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "claimOwner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Escrow.OfferStatus",
+        "name": "toStatus",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ClaimToken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "FinishOffer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewOffer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "OfferCancelled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "OfferFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      }
+    ],
+    "name": "OfferJoined",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "OfferRescinded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "blockNumber",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "proof",
+        "type": "bytes"
+      }
+    ],
+    "name": "ProofAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "RequestVerification",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "_deals",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealStartBlock",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealLengthInBlocks",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proofFrequencyInBlocks",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateral",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "erc20TokenDenomination",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "ipfsFileCID",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fileSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "blake3Checksum",
+        "type": "string"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "commitment",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "partyAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "cancel",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct Escrow.OfferCounterpart",
+        "name": "creatorCounterpart",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "commitment",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "partyAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "cancel",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct Escrow.OfferCounterpart",
+        "name": "executorCounterpart",
+        "type": "tuple"
+      },
+      {
+        "internalType": "enum Escrow.OfferStatus",
+        "name": "offerStatus",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_link",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_governor",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_treasury",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_vault",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_oracle",
+        "type": "address"
+      }
+    ],
+    "name": "_initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "_proofSuccessRate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "_proofblocks",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "cancelOffer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_requestId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_payment",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes4",
+        "name": "_callbackFunctionId",
+        "type": "bytes4"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expiration",
+        "type": "uint256"
+      }
+    ],
+    "name": "cancelRequest",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "requiredRate",
+        "type": "uint256"
+      }
+    ],
+    "name": "complete",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "successCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numWindows",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint16",
+        "name": "status",
+        "type": "uint16"
+      },
+      {
+        "internalType": "string",
+        "name": "result",
+        "type": "string"
+      }
+    ],
+    "name": "fulfill",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getBlake3Checksum",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getChainlinkToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCollateral",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDeal",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "offerId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "dealStartBlock",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "dealLengthInBlocks",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "proofFrequencyInBlocks",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "collateral",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "erc20TokenDenomination",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "ipfsFileCID",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fileSize",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "blake3Checksum",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "commitment",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "partyAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "bool",
+                "name": "cancel",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct Escrow.OfferCounterpart",
+            "name": "creatorCounterpart",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "commitment",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "partyAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "bool",
+                "name": "cancel",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct Escrow.OfferCounterpart",
+            "name": "executorCounterpart",
+            "type": "tuple"
+          },
+          {
+            "internalType": "enum Escrow.OfferStatus",
+            "name": "offerStatus",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct Escrow.Deal",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDealLengthInBlocks",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDealStartBlock",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_dealId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDealStatus",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getErc20TokenDenomination",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getFileSize",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getIpfsFileCid",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getOffer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "windowNum",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProofBlock",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProofBlockNumbers",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProofFrequencyInBlocks",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "governor",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerID",
+        "type": "uint256"
+      }
+    ],
+    "name": "joinOffer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "offerPerUser",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_jobId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_offerid",
+        "type": "string"
+      }
+    ],
+    "name": "requestVerification",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
+    "name": "rescindOffer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "responses",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "responseOfferID",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "successCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numWindows",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "status",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "result",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_proof",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "targetWindow",
+        "type": "uint256"
+      }
+    ],
+    "name": "saveProof",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_treasury",
+        "type": "address"
+      }
+    ],
+    "name": "setTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "executorAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dealLength",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proofFrequency",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "bounty",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateral",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fileSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "cid",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "blake3",
+        "type": "string"
+      }
+    ],
+    "name": "startOffer",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasury",
+    "outputs": [
+      {
+        "internalType": "contract ITreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "vault",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawLink",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
