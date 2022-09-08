@@ -120,7 +120,6 @@ impl VitalikProvider {
     }
 
     pub async fn get_onchain(&self, deal_id: DealID) -> Result<OnChainDealInfo> {
-        //unimplemented!("write me ;)")
         let offer_id = deal_id.0;
 
         let deal_start_block: BlockNum = BlockNum(
@@ -130,7 +129,7 @@ impl VitalikProvider {
                 .await?
                 .as_u64(),
         );
-        println!("{:?}", deal_start_block);
+
         let deal_length_in_blocks: BlockNum = BlockNum(
             self.u256_method("getDealLengthInBlocks", offer_id)
                 .await?
@@ -138,7 +137,7 @@ impl VitalikProvider {
                 .await?
                 .as_u64(),
         );
-        println!("{:?}", deal_length_in_blocks);
+
         let proof_frequency_in_blocks: BlockNum = BlockNum(
             self.u256_method("getProofFrequencyInBlocks", offer_id)
                 .await?
@@ -211,7 +210,7 @@ impl VitalikProvider {
 
         Ok(deal_info)
     }
-    
+
     // the validator should be able to handle if proofs get sent twice on accident
     // return the block number that the proof made it into.
     pub async fn post_proof(&self, _deal_id: &DealID, _proof: Proof) -> Result<BlockNum> {
