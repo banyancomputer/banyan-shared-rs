@@ -4,7 +4,7 @@ use ethers::abi::Tokenize;
 use ethers::prelude::builders::ContractCall;
 use ethers::prelude::{H256, BaseContract, AbiError};
 use ethers::providers::{Http, Middleware, Provider};
-use ethers::types::{Filter, Log, H160, U256};
+use ethers::types::{Filter, Log, H160, U256, Address};
 use ethers::contract::Contract;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -31,9 +31,19 @@ impl VitalikContract {
         })
     }
 
-    pub async fn method(&self, name: &str, args: impl Tokenize) -> Result<ContractCall<Provider<Http>, U256>, AbiError> {
+    pub async fn u256_method(&self, name: &str, args: impl Tokenize) -> Result<ContractCall<Provider<Http>, U256>, AbiError> {
         let contract = self.contract.lock().await;
-        contract.method::<_, _>(name, args)
+        contract.method::<_, U256>(name, args)
+    }
+
+    pub async fn address_method(&self, name: &str, args: impl Tokenize) -> Result<ContractCall<Provider<Http>, Address>, AbiError> {
+        let contract = self.contract.lock().await;
+        contract.method::<_, Address>(name, args)
+    }
+
+    pub async fn string_method(&self, name: &str, args: impl Tokenize) -> Result<ContractCall<Provider<Http>, String>, AbiError> {
+        let contract = self.contract.lock().await;
+        contract.method::<_, String>(name, args)
     }
 }
 
