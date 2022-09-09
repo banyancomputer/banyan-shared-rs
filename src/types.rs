@@ -1,5 +1,12 @@
 use cid::Cid;
-use ethers::prelude::Address;
+use ethers::{
+    abi::{
+        Token::{Address as Ad, String as Str, Uint},
+        Tokenize,
+    },
+    prelude::Address,
+    types::U256,
+};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sled::IVec;
@@ -75,6 +82,14 @@ impl Mul<u64> for BlockNum {
     }
 }
 
+impl Mul<usize> for BlockNum {
+    type Output = Self;
+    fn mul(self, other: usize) -> Self {
+        let u = other as u64;
+        BlockNum(self.0 * u)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct TokenAmount(pub u64);
 
@@ -98,6 +113,23 @@ pub struct OnChainDealInfo {
         deserialize_with = "deserialize_hash"
     )]
     pub blake3_checksum: bao::Hash,
+}
+
+impl Tokenize for OnChainDealInfo {
+    fn into_tokens(self) -> Vec<ethers::abi::Token> {
+        vec![
+            Uint(U256::from(self.deal_id.0)),
+            Uint(U256::from(self.deal_start_block.0)),
+            Uint(U256::from(self.deal_length_in_blocks.0)),
+            Uint(U256::from(self.proof_frequency_in_blocks.0)),
+            Uint(U256::from(self.price.0)),
+            Uint(U256::from(self.collateral.0)),
+            Ad(self.erc20_token_denomination.0),
+            Str(self.ipfs_file_cid.to_string()),
+            Uint(U256::from(self.file_size)),
+            Str(self.blake3_checksum.to_string()),
+        ]
+    }
 }
 
 impl OnChainDealInfo {

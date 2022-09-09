@@ -17,3 +17,8 @@ cid = "0.8"
 serde = { version = "1", features = ["derive"] }
 tempfile = "3.3"
 tokio = { version = "1", features = ["full"] }
+serde_json = "*"
+multihash = "0.16.3"
+multibase = "0.9.1"
+lazy_static = "1.4.0"
+libmath = "0.2.1"
