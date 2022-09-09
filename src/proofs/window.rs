@@ -41,6 +41,14 @@ pub fn get_the_next_window(
     }
 }
 
+// should be right, haven't tested extensively
+pub fn get_num_windows(deal_length: BlockNum, window_size: BlockNum) -> Result<usize, anyhow::Error> {
+    if window_size.0 == 0 {
+        return Err(anyhow::anyhow!("Cannot divide by zero"));
+    }
+    Ok(math::round::ceil((deal_length.0 / window_size.0) as f64, 0) as usize)
+}
+
 // tests
 #[cfg(test)]
 mod tests {
