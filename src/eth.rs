@@ -35,11 +35,10 @@ pub struct VitalikProvider {
 }
 
 impl VitalikProvider {
-    pub fn new(url: String, timeout_seconds: u64) -> Result<Self> {
+    pub fn new(url: String, contract_address: String, timeout_seconds: u64) -> Result<Self> {
         let provider = Provider::<Http>::try_from(url)?;
         let provider2 = provider.clone();
-        let address = std::env::var("CONTRACT_ADDRESS")
-            .expect("CONTRACT_ADDRESS must be set")
+        let address = contract_address
             .parse::<Address>()
             .expect("could not parse contract address");
         let abi: Abi = serde_json::from_str(
