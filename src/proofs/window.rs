@@ -52,8 +52,9 @@ pub fn get_num_windows(deal_length: BlockNum, window_size: BlockNum) -> Result<u
 // tests
 #[cfg(test)]
 mod tests {
-    // in this test, we have a deal with length 21, proof window of size 5, and start block is 3
 
+    // in this test, we have a deal with length 21, proof window of size 5, and start block is 3
+    use super::*;
     #[test]
     fn get_the_right_window_works() {
         unimplemented!("fail");
@@ -61,5 +62,14 @@ mod tests {
     #[test]
     fn get_the_next_window_works() {
         unimplemented!("fail");
+    }
+    #[test]
+    fn get_num_windows_works() {
+        let (deal_length1, window_size1) = (BlockNum(20), BlockNum(2));
+        let (deal_length2, window_size2) = (BlockNum(20), BlockNum(3));
+        //let (deal_length3, window_size3) = (BlockNum(20), BlockNum(0));
+        assert_eq!(get_num_windows(deal_length1, window_size1).unwrap(), 10);
+        assert_eq!(get_num_windows(deal_length2, window_size2).unwrap(), 6);
+        //couldn't figure out how to get the error test working
     }
 }

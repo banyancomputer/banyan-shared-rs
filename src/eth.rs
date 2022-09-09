@@ -7,7 +7,7 @@ use ethers::{
     providers::{Http, Middleware, Provider},
     types::{Address, Filter, Log, U256},
 };
-use lazy_static::lazy_static;
+
 use multibase::decode;
 use multihash::Multihash;
 use serde::{Deserialize, Serialize};
@@ -34,19 +34,12 @@ pub struct VitalikProvider {
     contract: Mutex<Contract<Provider<Http>>>,
 }
 
-lazy_static! {
-    static ref URL: String = std::env::var("API_KEY")
-        .expect("API_KEY must be set.");
-    static ref PROVIDER: Provider<Http> = 
-        Provider::<Http>::try_from(&*URL).expect("could not instantiate provider");
-}
-
 impl VitalikProvider {
     pub fn new(url: String, timeout_seconds: u64) -> Result<Self> {
         let provider = Provider::<Http>::try_from(url)?;
-        
         let provider2 = provider.clone();
-        let address = "0x9ee596734485268eF62db4f3E61d891E221504f6" //0xeb3d5882faC966079dcdB909dE9769160a0a00Ac
+        let address = std::env::var("CONTRACT_ADDRESS")
+            .expect("CONTRACT_ADDRESS must be set")
             .parse::<Address>()
             .expect("could not parse contract address");
         let abi: Abi = serde_json::from_str(
@@ -57,10 +50,10 @@ impl VitalikProvider {
         .expect("couldn't load abi");
 
         Ok(Self {
-            provider: Mutex::new(provider2),
+            provider: Mutex::new(provider),
             // my_pending_transactions: HashMap::new(),
             timeout: Duration::from_secs(timeout_seconds),
-            contract: Mutex::new(Contract::new(address, abi, provider)),
+            contract: Mutex::new(Contract::new(address, abi, provider2))
         })
     }
 
