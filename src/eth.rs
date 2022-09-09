@@ -52,7 +52,7 @@ impl VitalikProvider {
             provider: Mutex::new(provider),
             // my_pending_transactions: HashMap::new(),
             timeout: Duration::from_secs(timeout_seconds),
-            contract: Mutex::new(Contract::new(address, abi, provider2))
+            contract: Mutex::new(Contract::new(address, abi, provider2)),
         })
     }
 

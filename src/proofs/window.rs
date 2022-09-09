@@ -42,7 +42,10 @@ pub fn get_the_next_window(
 }
 
 // should be right, haven't tested extensively
-pub fn get_num_windows(deal_length: BlockNum, window_size: BlockNum) -> Result<usize, anyhow::Error> {
+pub fn get_num_windows(
+    deal_length: BlockNum,
+    window_size: BlockNum,
+) -> Result<usize, anyhow::Error> {
     if window_size.0 == 0 {
         return Err(anyhow::anyhow!("Cannot divide by zero"));
     }
