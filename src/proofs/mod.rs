@@ -55,3 +55,70 @@ pub async fn gen_proof<R: Read + Seek>(
         bao_proof_data,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::types::BlockNum;
+    use ethers::abi::ethereum_types::BigEndianHash;
+    use ethers::prelude::H256;
+    use ethers::prelude::U256;
+
+    #[test]
+    fn test_compute_random_block_choice_from_hash() {
+        // TODO test behavior around int overflows?
+        use crate::proofs::compute_random_block_choice_from_hash;
+        let file_length = 2049;
+        let block_hash = H256::from_uint(&U256::from(0u64));
+        let (chunk_offset, chunk_size) =
+            compute_random_block_choice_from_hash(block_hash, file_length);
+        assert_eq!(chunk_offset, 0);
+        assert_eq!(chunk_size, 1024);
+        let block_hash = H256::from_uint(&U256::from(1u64));
+        let (chunk_offset, chunk_size) =
+            compute_random_block_choice_from_hash(block_hash, file_length);
+        assert_eq!(chunk_offset, 1024);
+        assert_eq!(chunk_size, 1024);
+        let block_hash = H256::from_uint(&U256::from(2u64));
+        let (chunk_offset, chunk_size) =
+            compute_random_block_choice_from_hash(block_hash, file_length);
+        assert_eq!(chunk_offset, 2048);
+        assert_eq!(chunk_size, 1);
+        let block_hash = H256::from_uint(&U256::from(379u64)); // 379 % 3 = 1
+        let (chunk_offset, chunk_size) =
+            compute_random_block_choice_from_hash(block_hash, file_length);
+        assert_eq!(chunk_offset, 1024);
+        assert_eq!(chunk_size, 1024);
+    }
+
+    #[test]
+    fn test_get_num_chunks() {
+        use crate::proofs::get_num_chunks;
+        assert_eq!(get_num_chunks(1024), 1);
+        assert_eq!(get_num_chunks(1025), 2);
+        assert_eq!(get_num_chunks(2048), 2);
+        assert_eq!(get_num_chunks(2049), 3);
+    }
+
+    #[test]
+    fn test_obao_genproof_roundtrip() {
+        use crate::proofs::{gen_obao, gen_proof};
+        use std::io::Cursor;
+        // let file_content = b"hello world".to_vec();
+        // let (obao, bao_hash) = gen_obao(Cursor::new(&file_content)).unwrap();
+        // let fake_block_hash = H256::from_uint(&U256::from(379u64)); // 379 % 3 = 1
+        //
+        // let proof = block_on(gen_proof(
+        //     BlockNum(3),
+        //     fake_block_hash,
+        //     Cursor::new(file_content),
+        //     Cursor::new(obao),
+        //     file_content.len() as u64,
+        // ))
+        // .unwrap();
+        // let mut proof_reader = Cursor::new(proof.bao_proof_data);
+        // let mut proof_content = vec![];
+        // proof_reader.read_to_end(&mut proof_content).unwrap();
+        // assert_eq!(proof_content, file_content);
+        unimplemented!("need to do~!");
+    }
+}
