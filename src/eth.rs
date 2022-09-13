@@ -184,3 +184,11 @@ impl VitalikProvider {
         unimplemented!("https://open.spotify.com/track/0oxYB9GoOIDrdzniNdKC44?si=71f88a0b1afa47a4")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn oh_my_god_this_needs_tests() {
+        unimplemented!("do it");
+    }
+}

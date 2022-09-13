@@ -62,6 +62,7 @@ mod tests {
     use ethers::abi::ethereum_types::BigEndianHash;
     use ethers::prelude::H256;
     use ethers::prelude::U256;
+    use std::io::Read;
 
     #[test]
     fn test_compute_random_block_choice_from_hash() {
@@ -99,26 +100,33 @@ mod tests {
         assert_eq!(get_num_chunks(2049), 3);
     }
 
-    #[test]
-    fn test_obao_genproof_roundtrip() {
+    #[tokio::test]
+    async fn test_obao_genproof_roundtrip() {
         use crate::proofs::{gen_obao, gen_proof};
         use std::io::Cursor;
-        // let file_content = b"hello world".to_vec();
-        // let (obao, bao_hash) = gen_obao(Cursor::new(&file_content)).unwrap();
-        // let fake_block_hash = H256::from_uint(&U256::from(379u64)); // 379 % 3 = 1
-        //
-        // let proof = block_on(gen_proof(
-        //     BlockNum(3),
-        //     fake_block_hash,
-        //     Cursor::new(file_content),
-        //     Cursor::new(obao),
-        //     file_content.len() as u64,
-        // ))
-        // .unwrap();
-        // let mut proof_reader = Cursor::new(proof.bao_proof_data);
-        // let mut proof_content = vec![];
-        // proof_reader.read_to_end(&mut proof_content).unwrap();
-        // assert_eq!(proof_content, file_content);
-        unimplemented!("need to do~!");
+        let file_content = b"hello world".to_vec();
+        let (obao, bao_hash) = gen_obao(Cursor::new(&file_content)).unwrap();
+        let fake_block_hash = H256::from_uint(&U256::from(379u64)); // 379 % 3 = 1
+
+        let proof = gen_proof(
+            BlockNum(3),
+            fake_block_hash,
+            Cursor::new(&file_content),
+            Cursor::new(&obao),
+            file_content.len() as u64,
+        )
+        .await
+        .unwrap();
+        let mut proof_reader = Cursor::new(proof.bao_proof_data);
+        let mut proof_content = vec![];
+        proof_reader.read_to_end(&mut proof_content).unwrap();
+
+        let validated_data = bao::decode::decode(&proof_content, &bao_hash).unwrap();
+        assert_eq!(validated_data, file_content);
+    }
+
+    #[tokio::test]
+    async fn test_proof_validation() {
+        unimplemented!("wooooohoooo!");
     }
 }

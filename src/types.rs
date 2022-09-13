@@ -142,3 +142,11 @@ pub struct Proof {
     pub block_number: BlockNum,
     pub bao_proof_data: Vec<u8>,
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_tokenize_for_onchaindealinfo() {
+        unimplemented!("do it");
+    }
+}
