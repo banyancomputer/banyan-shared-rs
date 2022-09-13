@@ -12,6 +12,7 @@ jobs:
     uses: banyancomputer/.github/.github/workflows/rust-codecov.yml@master
     with:
       name_of_stuff_to_test_in_target: 'deps/banyan_shared-'
+      needs_test: 'true'
   run_linters:
     uses: banyancomputer/.github/.github/workflows/rust_linters_formatters.yml@master
   run_tests:
