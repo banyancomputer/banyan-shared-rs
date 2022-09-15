@@ -18,7 +18,8 @@ use std::env;
 // Important: The ABI must be updated if the contract is updated
 lazy_static! {
     // IMPORTANT: This is a reference to a Test Contract's ABI
-    // Contract Address: 0x58970FE3C93B4663597cE7398F11F7826426Db05
+    // TODO: Change to the real contract's ABI, and update onChainDealInfo
+    // Contract Address: 0x7Da936F4A55D5044e1838Cc959935085662392F1
     static ref BANYAN_ABI_STR_REF: &'static str = include_str!("../abi/test.json");
 }
 

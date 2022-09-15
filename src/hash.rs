@@ -1,6 +1,7 @@
-use anyhow::Result;
-use multihash::{Code, Hasher, Multihash, MultihashDigest, Sha2_256};
-use std::io::Read;
+use std::io::{Read, BufReader};
+use std::io;
+use anyhow::{Result, anyhow, Error};
+use multihash::{Hasher, Sha2_256, Code, MultihashDigest, Multihash};
 
 /*
  * A Really simple hasher lib.
@@ -19,37 +20,33 @@ pub struct FileHasher<'a> {
     input: &'a std::fs::File,
 }
 
+/// Our File Hasher
+/// Janky as hell, but it works.
 impl<'a> FileHasher<'a> {
     /// Create a new Hasher
     pub fn new(input: &'a std::fs::File) -> Self {
         Self { input }
     }
 
-    /// Return a Sha2-256 MultiHash of the file
-    pub fn multihash(&mut self) -> Result<Multihash> {
-        let mut hasher = Sha2_256::default();
+    /// Return a Sha2-256 Multihash and Blake3 Hash for a file
+    pub fn hash(&mut self) -> Result<(Multihash, blake3::Hash), Error> {
+        let mut multi_hasher = Sha2_256::default();
+        let mut b3_hasher = blake3::Hasher::new();
         let mut buffer = [0; B3_HASHER_CHUNK_SIZE]; // TODO: What's the right size?
+        let mut reader = BufReader::new(self.input);
         loop {
-            let count = self.input.read(&mut buffer)?;
-            if count == 0 {
-                break;
+            match reader.read(&mut buffer) {
+                Ok(0) => return Ok((
+                    Code::Sha2_256.wrap(&multi_hasher.finalize()).unwrap(),
+                    b3_hasher.finalize()
+                )),
+                Ok(n) => {
+                    b3_hasher.update(&buffer[..n]);
+                    multi_hasher.update(&buffer[..n]);
+                }
+                Err(ref e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                Err(e) => return Err(anyhow!(e)),
             }
-            hasher.update(&buffer[..count]);
         }
-        Ok(Code::Sha2_256.wrap(hasher.finalize()).unwrap())
-    }
-
-    /// Hash the input - Return as a Hash
-    pub fn b3hash(&mut self) -> Result<blake3::Hash> {
-        let mut hasher = blake3::Hasher::new();
-        let mut buffer = [0; B3_HASHER_CHUNK_SIZE];
-        loop {
-            let bytes_read = self.input.read(&mut buffer)?;
-            if bytes_read == 0 {
-                break;
-            }
-            hasher.update(&buffer[..bytes_read]);
-        }
-        Ok(hasher.finalize())
     }
 }

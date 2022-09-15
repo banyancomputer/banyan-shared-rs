@@ -34,15 +34,12 @@ pub struct DealProposalBuilder {
 impl Default for DealProposalBuilder {
     fn default() -> Self {
         DealProposalBuilder {
-            // note (al): this is my address, we should change this to a real address
-            executor_address: "0x2C231Fb9B59b56CdDD413443D90628384b3F1d60".to_string(),
-            deal_length_in_blocks: 0,
-            /// TODO: Call API to get a good value
+            executor_address: "0x0000000000000000000000000000000000000000".to_string(),
+            deal_length_in_blocks: 0, /// TODO: Call API to get a good value
             proof_frequency_in_blocks: 10,
             price_per_tib: 0.0,
             collateral_per_tib: 0.0,
-            // The Gorli test eth address
-            erc20_token_denomination: "0xD87Ba7A50B2E7E660f678A895E4B72E7CB4CCd9C".to_string(),
+            erc20_token_denomination: "0x0000000000000000000000000000000000000000".to_string(),
         }
     }
 }
@@ -114,14 +111,12 @@ impl DealProposalBuilder {
 
         let file_size = U256::from(_file_size);
 
+        // Calculate the Multi and Blake3 Hashes
+        let (mh, b3h) = FileHasher::new(file).hash()?;
+
         // Calculate the CID of the file using Sha2-256 and Multihash
-
-        // TODO: fix this
-        let mh = FileHasher::new(file).multihash().unwrap();
-        let cid = Cid::new_v1(0x12, mh);
-        let ipfs_file_cid = CidToken(cid);
-
-        let blake3_checksum = Blake3HashToken(FileHasher::new(file).b3hash().unwrap());
+        let blake3_checksum = Blake3HashToken( b3h );
+        let ipfs_file_cid = CidToken( Cid::new_v1(0x55, mh) );
         Ok(DealProposal {
             executor_address,
             deal_length_in_blocks,
@@ -147,8 +142,6 @@ mod tests {
         let file = File::open("abi/escrow.json").unwrap();
         let deal_proposal = DealProposal::builder().build(&file).unwrap();
 
-        // Check the Cid is correct
-        // Should be: bafkreigfb3m7aoajp42rafefephqg7kcrxezpqtz4tsqhnpkofelwc5l5e
         assert_eq!(
             deal_proposal.ipfs_file_cid.to_string(),
             "bafkreigfb3m7aoajp42rafefephqg7kcrxezpqtz4tsqhnpkofelwc5l5e"

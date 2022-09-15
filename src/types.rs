@@ -92,7 +92,6 @@ impl Tokenizable for Blake3HashToken {
     }
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            // TODO: THis was a hack for testing purposes, fix it
             Str(s) => Ok(Blake3HashToken(blake3::Hash::from_hex(s).unwrap())),
             other => Err(InvalidOutputType(format!(
                 "Expected `String`, got {:?}",
