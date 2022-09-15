@@ -9,6 +9,7 @@ use ethers::{
     types::U256,
 };
 use ethers_contract_derive::EthAbiType;
+use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sled::IVec;
 use std::fmt::{Display, Formatter};
@@ -391,6 +392,23 @@ impl Tokenizable for OnChainDealInfo {
     }
     fn into_token(self) -> Token {
         Token::Tuple(self.into_tokens())
+    }
+}
+
+impl Tokenize for OnChainDealInfo {
+    fn into_tokens(self) -> Vec<ethers::abi::Token> {
+        vec![
+            Uint(U256::from(self.deal_id.0)),
+            Uint(U256::from(self.deal_start_block.0)),
+            Uint(U256::from(self.deal_length_in_blocks.0)),
+            Uint(U256::from(self.proof_frequency_in_blocks.0)),
+            Uint(U256::from(self.price.0)),
+            Uint(U256::from(self.collateral.0)),
+            Ad(self.erc20_token_denomination.0),
+            Str(self.ipfs_file_cid.to_string()),
+            Uint(U256::from(self.file_size)),
+            Str(self.blake3_checksum.to_string()),
+        ]
     }
 }
 
