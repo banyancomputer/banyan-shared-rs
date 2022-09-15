@@ -35,7 +35,8 @@ impl Default for DealProposalBuilder {
     fn default() -> Self {
         DealProposalBuilder {
             executor_address: "0x0000000000000000000000000000000000000000".to_string(),
-            deal_length_in_blocks: 0, /// TODO: Call API to get a good value
+            deal_length_in_blocks: 0,
+            /// TODO: Call API to get a good value
             proof_frequency_in_blocks: 10,
             price_per_tib: 0.0,
             collateral_per_tib: 0.0,
@@ -115,8 +116,8 @@ impl DealProposalBuilder {
         let (mh, b3h) = FileHasher::new(file).hash()?;
 
         // Calculate the CID of the file using Sha2-256 and Multihash
-        let blake3_checksum = Blake3HashToken( b3h );
-        let ipfs_file_cid = CidToken( Cid::new_v1(0x55, mh) );
+        let blake3_checksum = Blake3HashToken(b3h);
+        let ipfs_file_cid = CidToken(Cid::new_v1(0x55, mh));
         Ok(DealProposal {
             executor_address,
             deal_length_in_blocks,

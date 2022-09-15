@@ -1,7 +1,7 @@
-use std::io::{Read, BufReader};
+use anyhow::{anyhow, Error, Result};
+use multihash::{Code, Hasher, Multihash, MultihashDigest, Sha2_256};
 use std::io;
-use anyhow::{Result, anyhow, Error};
-use multihash::{Hasher, Sha2_256, Code, MultihashDigest, Multihash};
+use std::io::{BufReader, Read};
 
 /*
  * A Really simple hasher lib.
@@ -36,10 +36,12 @@ impl<'a> FileHasher<'a> {
         let mut reader = BufReader::new(self.input);
         loop {
             match reader.read(&mut buffer) {
-                Ok(0) => return Ok((
-                    Code::Sha2_256.wrap(&multi_hasher.finalize()).unwrap(),
-                    b3_hasher.finalize()
-                )),
+                Ok(0) => {
+                    return Ok((
+                        Code::Sha2_256.wrap(multi_hasher.finalize()).unwrap(),
+                        b3_hasher.finalize(),
+                    ))
+                }
                 Ok(n) => {
                     b3_hasher.update(&buffer[..n]);
                     multi_hasher.update(&buffer[..n]);
