@@ -12,8 +12,6 @@ use cid::Cid;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, str::FromStr};
 
-use tokio::sync::Mutex;
-
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProofBuddyMessageType {
     SubmitProof,
@@ -23,10 +21,10 @@ pub enum ProofBuddyMessageType {
 }
 
 pub struct VitalikProvider {
-    provider: Mutex<Provider<Http>>,
+    provider: Provider<Http>,
     // TODO: eventually we will need to handle if the provider falls over halfway through submitting a transaction.
     //my_pending_transactions: HashMap<TxnHash, PendingTransaction<'a>>,
-    contract: Mutex<Contract<Provider<Http>>>,
+    pub contract: Contract<Provider<Http>>,
 }
 
 impl VitalikProvider {
@@ -45,55 +43,53 @@ impl VitalikProvider {
 
         // TODO is this the right place to be sticking mutexes?
         Ok(Self {
-            provider: Mutex::new(provider),
+            provider,
             // my_pending_transactions: HashMap::new(),
             //timeout: Duration::from_secs(timeout_seconds),
-            contract: Mutex::new(Contract::new(address, abi, provider2)),
+            contract: Contract::new(address, abi, provider2),
         })
     }
 
     pub async fn get_latest_block_num(&self) -> Result<BlockNum> {
-        let provider = self.provider.lock().await;
-        let block = provider.get_block_number().await?;
+        let block = self.provider.get_block_number().await?;
         Ok(BlockNum(block.as_u64()))
     }
 
     pub async fn get_block_hash_from_num(&self, block_number: BlockNum) -> Result<H256> {
-        let provider = self.provider.lock().await;
-        let block = provider
+        self.provider
             .get_block(block_number.0)
             .await?
-            .ok_or_else(|| anyhow!("block not found"))?;
-        block.hash.ok_or_else(|| anyhow!("block hash not found"))
+            .ok_or_else(|| anyhow!("block not found"))?
+            .hash
+            .ok_or_else(|| anyhow!("block hash not found"))
     }
 
     pub async fn get_logs_from_filter(&self, filter: &Filter) -> Result<Vec<Log>> {
-        let provider = self.provider.lock().await;
-        let logs = provider.get_logs(filter).await?;
-        Ok(logs)
+        Ok(self.provider.get_logs(filter).await?)
     }
 
-    pub async fn get_block_num_from_window(
+    pub async fn get_proof_block_num_from_window(
         &self,
         deal_id: DealID,
         window_num: u64,
-    ) -> Result<BlockNum> {
-        let contract = self.contract.lock().await;
-        let block_num = contract
+    ) -> Result<Option<BlockNum>> {
+        let block_num = self.contract
             .method::<_, U256>("getProofBlock", (deal_id.0, window_num))?
             .call()
             .await?
             .as_u64();
-        let res = BlockNum(block_num);
-        Ok(res)
+        if block_num == 0 {
+            Ok(None)
+        } else {
+            Ok(Some(BlockNum(block_num)))
+        }
     }
 
     pub async fn get_onchain(&self, deal_id: DealID) -> Result<OnChainDealInfo> {
         let offer_id = deal_id.0;
-        let contract = self.contract.lock().await;
 
         let deal_start_block: BlockNum = BlockNum(
-            contract
+            self.contract
                 .method::<_, U256>("getDealStartBlock", offer_id)?
                 .call()
                 .await?
@@ -101,7 +97,7 @@ impl VitalikProvider {
         );
 
         let deal_length_in_blocks: BlockNum = BlockNum(
-            contract
+            self.contract
                 .method::<_, U256>("getDealLengthInBlocks", offer_id)?
                 .call()
                 .await?
@@ -109,7 +105,7 @@ impl VitalikProvider {
         );
 
         let proof_frequency_in_blocks: BlockNum = BlockNum(
-            contract
+            self.contract
                 .method::<_, U256>("getProofFrequencyInBlocks", offer_id)?
                 .call()
                 .await?
@@ -117,7 +113,7 @@ impl VitalikProvider {
         );
 
         let price: TokenAmount = TokenAmount(
-            contract
+            self.contract
                 .method::<_, U256>("getPrice", offer_id)?
                 .call()
                 .await?
@@ -125,7 +121,7 @@ impl VitalikProvider {
         );
 
         let collateral: TokenAmount = TokenAmount(
-            contract
+            self.contract
                 .method::<_, U256>("getCollateral", offer_id)?
                 .call()
                 .await?
@@ -133,26 +129,26 @@ impl VitalikProvider {
         );
 
         let erc20_token_denomination: Token = Token(
-            contract
+            self.contract
                 .method::<_, Address>("getErc20TokenDenomination", offer_id)?
                 .call()
                 .await?,
         );
 
-        let cid_return: String = contract
+        let cid_return: String = self.contract
             .method::<_, String>("getIpfsFileCid", offer_id)?
             .call()
             .await?;
 
         let ipfs_file_cid = Cid::from_str(cid_return.as_str())?;
 
-        let file_size: u64 = contract
+        let file_size: u64 = self.contract
             .method::<_, U256>("getFileSize", offer_id)?
             .call()
             .await?
             .as_u64(); // TODO this panics! fix this situation. be careful
 
-        let blake3_return: String = contract
+        let blake3_return: String = self.contract
             .method::<_, String>("getBlake3Checksum", offer_id)?
             .call()
             .await?;
