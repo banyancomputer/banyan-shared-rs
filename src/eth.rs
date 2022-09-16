@@ -220,12 +220,11 @@ impl EthClient {
     /// # Returns
     /// * `Deal` - The on chain Deal
     pub async fn get_deal(&self, deal_id: DealID) -> Result<OnChainDealInfo, Error> {
-        let deal = self
+        Ok(self
             .contract
             .method::<_, OnChainDealInfo>("getOffer", deal_id)?
             .call()
-            .await?;
-        Ok(deal)
+            .await?)
     }
 
     /* Proof Stuff */
@@ -249,8 +248,7 @@ impl EthClient {
 
     /// Get the current block hash for a given block number
     pub async fn get_block_hash_from_num(&self, block_number: BlockNum) -> Result<H256> {
-        let provider = &self.provider;
-        let block = provider
+        let block = self.provider
             .get_block(block_number.0)
             .await?
             .ok_or_else(|| anyhow!("block not found"))?;
@@ -261,18 +259,22 @@ impl EthClient {
         Ok(self.provider.get_logs(&filter).await?)
     }
 
-    pub async fn get_block_num_from_window(
+    pub async fn get_proof_block_num_from_window(
         &self,
         deal_id: DealID,
         window_num: u64,
-    ) -> Result<BlockNum> {
+    ) -> Result<Option<BlockNum>> {
         let block_num = self
             .contract
             .method::<_, U256>("getProofBlock", (deal_id.0, window_num))?
             .call()
             .await?
             .as_u64();
-        Ok(BlockNum(block_num))
+        if block_num == 0 {
+            Ok(None)
+        } else {
+            Ok(Some(BlockNum(block_num)))
+        }
     }
 }
 
@@ -292,7 +294,6 @@ mod test {
         // Try and get the current block number
         let block_num = eth_client.get_latest_block_num().await.unwrap();
         println!("Latest Block Number: {}", block_num.0);
-        return;
     }
 
     #[tokio::test]
