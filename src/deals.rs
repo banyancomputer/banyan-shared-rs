@@ -1,10 +1,10 @@
 use crate::{
     hash::FileHasher,
-    types::{Blake3HashToken, BlockNum, CidToken, DealProposal, TokenAddress, TokenMultiplier},
+    types::{Blake3HashToken, BlockNum, CidToken, DealProposal, TokenMultiplier},
 };
 use anyhow::{Error, Result};
 use cid::Cid;
-use ethers::{abi::Address, types::U256};
+use ethers::types::{Address, U256};
 
 /* Implements the deal proposal struct. */
 
@@ -30,7 +30,6 @@ pub struct DealProposalBuilder {
     /// The Address of the token to use as denominator for the price and collateral, as a string
     pub erc20_token_denomination: String,
 }
-
 impl Default for DealProposalBuilder {
     fn default() -> Self {
         DealProposalBuilder {
@@ -108,7 +107,7 @@ impl DealProposalBuilder {
         let token_multiplier = TokenMultiplier::default();
         let price = token_multiplier * (num_tib * self.price_per_tib);
         let collateral = token_multiplier * (num_tib * self.collateral_per_tib);
-        let erc20_token_denomination = TokenAddress(self.erc20_token_denomination.parse().unwrap());
+        let erc20_token_denomination: Address = self.erc20_token_denomination.parse().unwrap();
 
         let file_size = U256::from(_file_size);
 

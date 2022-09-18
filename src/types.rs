@@ -1,23 +1,15 @@
+use blake3::Hash as B3Hash;
 use cid::Cid;
 use ethers::{
-    abi::{
-        AbiType, InvalidOutputType, ParamType, Token,
-        Token::{Address as Ad, String as Str, Uint},
-        Tokenizable, Tokenize,
-    },
-    prelude::Address,
-    types::U256,
+    abi::{InvalidOutputType, Token, Tokenizable, Tokenize},
+    // TODO: Can we import this somewhere / do we need this?
+    types::{Address, U256},
 };
-use ethers_contract_derive::EthAbiType;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sled::IVec;
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, Mul, Sub};
 
-/* Contract Primitives */
-
-// CID
-// TODO make a little macro for tokenizable
 /// A Wrapper around the CID struct from the cid crate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CidToken(pub Cid);
@@ -32,6 +24,9 @@ impl CidToken {
     pub fn cid(&self) -> Cid {
         self.0
     }
+    pub fn to_string(&self) -> String {
+        self.0.to_string()
+    }
 }
 
 /// Impl Tokenizable for CidToken - This allows us to use CidToken as a Token in the ethers crate
@@ -39,7 +34,7 @@ impl Tokenizable for CidToken {
     /// Convert a Token::String to a CidToken
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Str(s) => Ok(CidToken(Cid::try_from(s).unwrap())),
+            Token::String(s) => Ok(CidToken(Cid::try_from(s).unwrap())),
             other => Err(InvalidOutputType(format!(
                 "Expected `String`, got {:?}",
                 other
@@ -48,7 +43,7 @@ impl Tokenizable for CidToken {
     }
     /// Convert a CidToken to a Token::String
     fn into_token(self) -> Token {
-        Str(self.0.to_string())
+        Token::String(self.0.to_string())
     }
 }
 
@@ -57,7 +52,7 @@ impl Serialize for CidToken {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.0.to_string())
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -71,28 +66,33 @@ impl<'de> Deserialize<'de> for CidToken {
     }
 }
 
-// Blake3 Hashes
-
-/// A Wrapper around the Blake3 Hash struct from the blake3 crate
+/// A Wrapper around the Hash struct from the bao crate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Blake3HashToken(pub blake3::Hash);
+pub struct Blake3HashToken(pub B3Hash);
 
 impl Blake3HashToken {
-    pub fn hash(&self) -> blake3::Hash {
+    /// Return the underlying bao::Hash
+    pub fn hash(&self) -> B3Hash {
         self.0
     }
+    /// Return the underlying bao::Hash as a Hex String
     pub fn to_hex(&self) -> String {
         self.0.to_hex().to_string()
     }
+    /// Return the underlying blake3::Hash as bytes
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        self.0.as_bytes()
+    }
 }
 
+/// Impl Tokenizable for Blake3HashToken - This allows us to use CidToken as a Token in the ethers crate
 impl Tokenizable for Blake3HashToken {
     fn into_token(self) -> Token {
-        Str(self.to_hex())
+        Token::String(self.to_hex())
     }
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Str(s) => Ok(Blake3HashToken(blake3::Hash::from_hex(s).unwrap())),
+            Token::String(s) => Ok(Blake3HashToken(B3Hash::from_hex(s).unwrap())),
             other => Err(InvalidOutputType(format!(
                 "Expected `String`, got {:?}",
                 other
@@ -101,44 +101,49 @@ impl Tokenizable for Blake3HashToken {
     }
 }
 
-impl AbiType for Blake3HashToken {
-    fn param_type() -> ParamType {
-        ParamType::String
+impl Serialize for Blake3HashToken {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(self.as_bytes())
     }
 }
 
-pub fn serialize_hash_token<S: Serializer>(
-    hash: &Blake3HashToken,
-    s: S,
-) -> Result<S::Ok, S::Error> {
-    let hash_bytes = hash.0.as_bytes();
-    s.serialize_bytes(hash_bytes)
+impl<'de> Deserialize<'de> for Blake3HashToken {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let b: [u8; 32] = <[u8; 32]>::deserialize(deserializer)?;
+        Ok(Blake3HashToken(B3Hash::from(b)))
+    }
 }
 
-pub fn deserialize_hash_token<'de, D>(deserializer: D) -> Result<Blake3HashToken, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let hash_bytes = <[u8; 32]>::deserialize(deserializer)?;
-    Ok(Blake3HashToken(blake3::Hash::from(hash_bytes)))
-}
-
-/// DealIds - The onChain ID of a deal submitted to Ethereum
+/// DealIDs - The onChain ID of a deal submitted to Ethereum
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct DealID(pub u64);
 
+impl DealID {
+    /// Return the underlying u64 of the DealID
+    pub fn id(&self) -> u64 {
+        self.0
+    }
+}
+
+/// Imple Tokenizable for DealID - this allows us to treat it like a Token with with Ethers Crate
 impl Tokenizable for DealID {
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Uint(u) => Ok(DealID(u.as_u64())),
+            Token::Uint(u) => Ok(DealID(u.as_u64())),
             other => Err(InvalidOutputType(format!(
-                "Expected `Uint`, got {:?}",
+                "Expected `Token::Uint()`, got {:?}",
                 other
             ))),
         }
     }
     fn into_token(self) -> Token {
-        Uint(self.0.into())
+        Token::Uint(self.0.into())
     }
 }
 
@@ -162,18 +167,19 @@ impl From<IVec> for DealID {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct BlockNum(pub u64);
 
+/// Imple Tokenizable for BlockNum - this allows us to treat it like a Token with with Ethers Crate
 impl Tokenizable for BlockNum {
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Uint(u) => Ok(BlockNum(u.as_u64())),
+            Token::Uint(u) => Ok(BlockNum(u.as_u64())),
             other => Err(InvalidOutputType(format!(
-                "Expected `Uint`, got {:?}",
+                "Expected `Token::Uint()`, got {:?}",
                 other
             ))),
         }
     }
     fn into_token(self) -> Token {
-        Uint(self.0.into())
+        Token::Uint(self.0.into())
     }
 }
 
@@ -206,94 +212,100 @@ impl Mul<usize> for BlockNum {
     }
 }
 
-// TODO: Talk to @c about this
 /// Token Multiplier - a wrapper around u64 to specify a multiplier for a token
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord, EthAbiType,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct TokenMultiplier(pub u64);
-// Our default multiplier is 1e9
+
+// Our default multiplier is 1e18
 impl Default for TokenMultiplier {
     fn default() -> Self {
-        TokenMultiplier(1_000_000_000)
+        TokenMultiplier(1_000_000_000_000_000_000)
     }
 }
 
-/// Multiply a token amount as a float and return the result as TokenAmount
+/// Multiply a TokenMultiplier as a float and return the result as TokenAmount
 impl Mul<f64> for TokenMultiplier {
     type Output = TokenAmount;
     fn mul(self, other: f64) -> TokenAmount {
         let amount = (self.0 as f64 * other).round() as u64;
         if amount == 0 {
-            TokenAmount(1)
+            TokenAmount(1) // This is the smallest a TokenAmount can be
         } else {
             TokenAmount(amount)
         }
     }
 }
 
-/// Token Amount
+/// Token Amount - A wrapper around a u64 to rep
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct TokenAmount(pub u64);
 
 impl Tokenizable for TokenAmount {
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Uint(u) => Ok(TokenAmount(u.as_u64())),
+            Token::Uint(u) => Ok(TokenAmount(u.as_u64())),
             other => Err(InvalidOutputType(format!(
-                "Expected `Uint`, got {:?}",
+                "Expected `Token::Uint()`, got {:?}",
                 other
             ))),
         }
     }
     fn into_token(self) -> Token {
-        Uint(self.0.into())
-    }
-}
-
-// TODO: Do we want to define this like this? There's already a type called Token in the ethers crate
-/// Token - The identifier for a token contract
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct TokenAddress(pub Address);
-
-impl Tokenizable for TokenAddress {
-    fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
-        match token {
-            Ad(a) => Ok(TokenAddress(a)),
-            other => Err(InvalidOutputType(format!(
-                "Expected `Address`, got {:?}",
-                other
-            ))),
-        }
-    }
-    fn into_token(self) -> Token {
-        Ad(self.0)
+        Token::Uint(self.0.into())
     }
 }
 
 /// An Enum describing the different states a deal can be in
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, EthAbiType)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DealStatus {
     /// The deal does not exist
-    Non,
+    Non = 0,
     /// The deal has been submitted to the chain, but not yet accepted
-    DealCreated,
+    DealCreated = 1,
     /// The deal has been accepted by the executor
-    DealAccepted,
+    DealAccepted = 2,
     /// The deal is active
-    DealActive,
+    DealActive = 3,
     /// The deal has been completed
-    DealCompleted,
+    DealCompleted = 4,
     /// The deal has been finalized
-    DealFinalized,
+    DealFinalized = 5,
     /// The deal was submitted to the chain, but not accepted
-    DealTimedOut,
+    DealTimedOut = 6,
     /// The deal was submitted to the chain, and then cancelled
-    DealCancelled,
+    DealCancelled = 7,
 }
 
-/// DealProposal - A proposal for a deal
-/// This is the data that is submitted to the Ethereum contract to create a deal
+/// Impl Tokenizable for DealStatus - this allows us to treat it like a Token with with Ethers Crate
+impl Tokenizable for DealStatus {
+    fn into_token(self) -> Token {
+        Token::Uint(U256::from(self as u8))
+    }
+    fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
+        match token {
+            Token::Uint(u) => match u.as_u64() {
+                0 => Ok(DealStatus::Non),
+                1 => Ok(DealStatus::DealCreated),
+                2 => Ok(DealStatus::DealAccepted),
+                3 => Ok(DealStatus::DealActive),
+                4 => Ok(DealStatus::DealCompleted),
+                5 => Ok(DealStatus::DealFinalized),
+                6 => Ok(DealStatus::DealTimedOut),
+                7 => Ok(DealStatus::DealCancelled),
+                _ => Err(InvalidOutputType(format!(
+                    "Expected `Token::Uint()`, got {:?}",
+                    token
+                ))),
+            },
+            other => Err(InvalidOutputType(format!(
+                "Expected `Token::Uint()`, got {:?}",
+                other
+            ))),
+        }
+    }
+}
+
+/// DealProposal - What is submitted to the Ethereum contract to create a deal
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DealProposal {
     /// The address of the party to propose the deal to
@@ -307,31 +319,24 @@ pub struct DealProposal {
     /// The amount of collateral the executor must post
     pub collateral: TokenAmount,
     /// The token to use for payment
-    pub erc20_token_denomination: TokenAddress,
+    pub erc20_token_denomination: Address,
     /// The File size of the data to be stored
     pub file_size: U256,
-    // TODO: Change these to the correct types
     /// The CID of the data to be stored
     pub ipfs_file_cid: CidToken,
-    #[serde(
-        serialize_with = "serialize_hash_token",
-        deserialize_with = "deserialize_hash_token"
-    )]
     /// The blake3 hash of the data to be stored
     pub blake3_checksum: Blake3HashToken,
 }
 
-// TODO: Figure out how to derive this using EthAbiType
-// TODO: Cleanup Token types so that they implement Tokenizable
 impl Tokenize for DealProposal {
-    fn into_tokens(self) -> Vec<ethers::abi::Token> {
+    fn into_tokens(self) -> Vec<Token> {
         vec![
-            Ad(self.executor_address),
-            Uint(U256::from(self.deal_length_in_blocks.0)),
-            Uint(U256::from(self.proof_frequency_in_blocks.0)),
-            Uint(U256::from(self.price.0)),
-            Uint(U256::from(self.collateral.0)),
-            Ad(self.erc20_token_denomination.0),
+            self.executor_address.into_token(),
+            self.deal_length_in_blocks.into_token(),
+            self.proof_frequency_in_blocks.into_token(),
+            self.price.into_token(),
+            self.collateral.into_token(),
+            self.erc20_token_denomination.into_token(),
             self.file_size.into_token(),
             self.ipfs_file_cid.into_token(),
             self.blake3_checksum.into_token(),
@@ -349,19 +354,16 @@ pub struct OnChainDealInfo {
     pub proof_frequency_in_blocks: BlockNum,
     pub price: TokenAmount,
     pub collateral: TokenAmount,
-    pub erc20_token_denomination: TokenAddress,
+    pub erc20_token_denomination: Address,
     pub ipfs_file_cid: CidToken,
     pub file_size: U256,
-    #[serde(
-        serialize_with = "serialize_hash_token",
-        deserialize_with = "deserialize_hash_token"
-    )]
     pub blake3_checksum: Blake3HashToken,
     pub creator_address: Address,
     pub executor_address: Address,
     // pub deal_status: DealStatus,
 }
 
+/// Impl Tokenizable for onChainDealInfo - This allows us to treat the struct as a Token with ethers
 impl Tokenizable for OnChainDealInfo {
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
@@ -374,7 +376,7 @@ impl Tokenizable for OnChainDealInfo {
                     proof_frequency_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
                     price: TokenAmount::from_token(tokens.next().unwrap())?,
                     collateral: TokenAmount::from_token(tokens.next().unwrap())?,
-                    erc20_token_denomination: TokenAddress::from_token(tokens.next().unwrap())?,
+                    erc20_token_denomination: Address::from_token(tokens.next().unwrap())?,
                     ipfs_file_cid: CidToken::from_token(tokens.next().unwrap())?,
                     file_size: U256::from_token(tokens.next().unwrap())?,
                     blake3_checksum: Blake3HashToken::from_token(tokens.next().unwrap())?,
@@ -390,7 +392,21 @@ impl Tokenizable for OnChainDealInfo {
         }
     }
     fn into_token(self) -> Token {
-        Token::Tuple(self.into_tokens())
+        Token::Tuple(vec![
+            self.deal_id.into_token(),
+            self.deal_start_block.into_token(),
+            self.deal_length_in_blocks.into_token(),
+            self.proof_frequency_in_blocks.into_token(),
+            self.price.into_token(),
+            self.collateral.into_token(),
+            self.erc20_token_denomination.into_token(),
+            self.ipfs_file_cid.into_token(),
+            self.file_size.into_token(),
+            self.blake3_checksum.into_token(),
+            self.creator_address.into_token(),
+            self.executor_address.into_token(),
+            // self.deal_status.into_token(),
+        ])
     }
 }
 
