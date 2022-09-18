@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Error, Result};
+use blake3::{Hash as B3Hash, Hasher as B3Hasher};
 use multihash::{Code, Hasher, Multihash, MultihashDigest, Sha2_256};
 use std::io;
 use std::io::{BufReader, Read};
@@ -29,9 +30,9 @@ impl<'a> FileHasher<'a> {
     }
 
     /// Return a Sha2-256 Multihash and Blake3 Hash for a file
-    pub fn hash(&mut self) -> Result<(Multihash, blake3::Hash), Error> {
+    pub fn hash(&mut self) -> Result<(Multihash, B3Hash), Error> {
         let mut multi_hasher = Sha2_256::default();
-        let mut b3_hasher = blake3::Hasher::new();
+        let mut b3_hasher = B3Hasher::new();
         let mut buffer = [0; B3_HASHER_CHUNK_SIZE]; // TODO: What's the right size?
         let mut reader = BufReader::new(self.input);
         loop {

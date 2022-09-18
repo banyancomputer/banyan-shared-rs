@@ -78,6 +78,7 @@ impl Default for EthClient {
     }
 }
 
+// TODO: Update docs
 /// The EthProvider is a wrapper around the ethers-rs Provider that handles all Ethereum
 /// interactions.
 impl EthClient {
@@ -92,7 +93,7 @@ impl EthClient {
     ///                 This is required for interacting with payable functions.
     /// * `contract_address` - The (Optional) Deployed Solidity Contract Address to interact with.
     /// // * `timeout` - The (Optional) Timeout for the Eth Client. 15 seconds by default.
-    /// ```
+    /// ```no_run
     /// use banyan_shared::eth::EthClient;
     /// use ethers::types::Address;
     ///
@@ -161,11 +162,27 @@ impl EthClient {
 
     /* Deal Stuff */
 
-    /// Submit a Deal to the Banyan Contract
+    // TODO: Do we want to add optional event listening?
+    /// Propose a Deal to the Banyan Contract
     /// # Arguments
-    /// * `deal` - The Deal to submit a proposal for
+    /// * `deal` - The DealProposal to submit a proposal for
     /// * 'gas_limit` - An (Optional) Gas Limit for the transaction
     /// * `gas_price` - An (Optional) Gas Price for the transaction
+    /// ```no_run
+    /// use banyan_shared::eth::EthClient;
+    /// use banyan_shared::deals::*;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let file = std::fs::File::open("./abi/escrow.json").unwrap();
+    ///     let client = EthClient::default();
+    ///     let deal = DealProposalBuilder::default().build(&file).unwrap();
+    ///     let deal_id = client.propose_deal(deal, None, None).await.unwrap();
+    /// }
+    /// ```
+    /// # Panics
+    /// * If the Deal Proposal is invalid
+    /// * If the client is not configured with a signer
     pub async fn propose_deal(
         &self,
         deal: DealProposal,
@@ -204,6 +221,8 @@ impl EthClient {
         dbg!("Trxn Hash: {:?}", &tx_hash);
         let bn = receipt.as_ref().unwrap().block_number.unwrap();
         dbg!("Block Number: {:?}", &bn);
+        // TODO: More sophisticated Filter
+        // For example, filtering by creator and executor address
         let logs: Vec<NewOffer> = match self.contract.event().from_block(bn).query().await {
             Ok(logs) => logs,
             Err(e) => return Err(anyhow!("Error listening for transaction logs: {:?} ", &e)),
@@ -248,7 +267,8 @@ impl EthClient {
 
     /// Get the current block hash for a given block number
     pub async fn get_block_hash_from_num(&self, block_number: BlockNum) -> Result<H256> {
-        let block = self.provider
+        let block = self
+            .provider
             .get_block(block_number.0)
             .await?
             .ok_or_else(|| anyhow!("block not found"))?;
