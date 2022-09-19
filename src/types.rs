@@ -330,19 +330,15 @@ pub struct DealProposal {
 
 impl Display for DealProposal {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(
-            f,
-            "Executor Address: {}, Deal Length: {}, Proof Frequency: {}, Price: {}, Collateral: {}, ERC20 Token Denomination: {}, File Size: {}, IPFS CID: {}, Blake3 Checksum: {}",
-            self.executor_address,
-            self.deal_length_in_blocks.0,
-            self.proof_frequency_in_blocks.0,
-            self.price,
-            self.collateral,
-            self.erc20_token_denomination,
-            self.file_size,
-            self.ipfs_file_cid,
-            self.blake3_checksum,
-        )
+        writeln!(f, "Executor Address: {}", self.executor_address)?;
+        writeln!(f, "Deal Length: {}", self.deal_length_in_blocks)?;
+        writeln!(f, "Proof Frequency: {}", self.proof_frequency_in_blocks)?;
+        writeln!(f, "Bounty: {}", self.price)?;
+        writeln!(f, "Collateral: {}", self.collateral)?;
+        writeln!(f, "Token Denomination: {}", self.erc20_token_denomination)?;
+        writeln!(f, "File Size: {}", self.file_size)?;
+        writeln!(f, "File CID: {}", self.ipfs_file_cid)?;
+        writeln!(f, "File Blake3 Checksum: {}", self.blake3_checksum)
     }
 }
 
@@ -383,22 +379,19 @@ pub struct OnChainDealInfo {
 
 impl Display for OnChainDealInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(
-            f,
-            "Deal ID: {}, Creator: {}, Executor: {}, Deal Start: {}, Deal Length: {}, Proof Frequency: {}, Price: {}, Collateral: {}, Token Denomination: {}, File Size: {}, IPFS CID: {}, Blake3 Hash: {}",
-            self.deal_id,
-            self.deal_start_block,
-            self.deal_length_in_blocks,
-            self.proof_frequency_in_blocks,
-            self.price,
-            self.collateral,
-            self.erc20_token_denomination,
-            self.ipfs_file_cid,
-            self.file_size,
-            self.blake3_checksum,
-            self.creator_address,
-            self.executor_address,
-        )
+        writeln!(f, "Deal ID: {}", self.deal_id)?;
+        writeln!(f, "Deal Start Block: {}", self.deal_start_block)?;
+        writeln!(f, "Deal Length: {}", self.deal_length_in_blocks)?;
+        writeln!(f, "Proof Frequency: {}", self.proof_frequency_in_blocks)?;
+        writeln!(f, "Bounty: {}", self.price)?;
+        writeln!(f, "Collateral: {}", self.collateral)?;
+        writeln!(f, "Token Denomination: {}", self.erc20_token_denomination)?;
+        writeln!(f, "File Size: {}", self.file_size)?;
+        writeln!(f, "File CID: {}", self.ipfs_file_cid)?;
+        writeln!(f, "File Blake3 Checksum: {}", self.blake3_checksum)?;
+        writeln!(f, "Creator Address: {}", self.creator_address)?;
+        writeln!(f, "Executor Address: {}", self.executor_address)
+        // writeln!(f, "Deal Status: {}", self.deal_status)
     }
 }
 
