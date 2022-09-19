@@ -234,11 +234,8 @@ mod test {
     /// Try to stage a file on Estuary with a fake DealId
     async fn stage_file() {
         let client = EstuaryClient::default();
-        let deal_id_str = "0".to_string();
-        let b3_hash_str =
-            "a291f28711c5238dc415f64a5525ff428f3fd6fd45fca181384a3f31091b5d81".to_string();
         client
-            .stage_file("Cargo.toml".to_string(), Some(deal_id_str), Some(b3_hash_str))
+            .stage_file("Cargo.toml".to_string(), None, None)
             .await
             .unwrap();
         return;

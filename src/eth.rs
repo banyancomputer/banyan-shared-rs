@@ -15,12 +15,9 @@ use std::convert::TryFrom;
 use std::env;
 
 // Load the Banyan Contract ABI into Memory
-// Important: The ABI must be updated if the contract is updated
+// IMPORTANT: The ABI must be updated if the contract is updated
 lazy_static! {
-    // IMPORTANT: This is a reference to a Test Contract's ABI
-    // TODO: Change to the real contract's ABI, and update onChainDealInfo
-    // Contract Address: 0x7Da936F4A55D5044e1838Cc959935085662392F1
-    static ref BANYAN_ABI_STR_REF: &'static str = include_str!("../abi/test.json");
+    static ref BANYAN_ABI_STR_REF: &'static str = include_str!("../abi/Escrow.json");
 }
 
 /// The Event emitted by the Banyan Contract when a Deal is submitted

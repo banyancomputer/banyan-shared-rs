@@ -2,7 +2,6 @@ use blake3::Hash as B3Hash;
 use cid::Cid;
 use ethers::{
     abi::{InvalidOutputType, Token, Tokenizable, Tokenize},
-    // TODO: Can we import this somewhere / do we need this?
     types::{Address, U256},
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -305,6 +304,21 @@ impl Tokenizable for DealStatus {
     }
 }
 
+impl Display for DealStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            DealStatus::Non => write!(f, "Non"),
+            DealStatus::DealCreated => write!(f, "DealCreated"),
+            DealStatus::DealAccepted => write!(f, "DealAccepted"),
+            DealStatus::DealActive => write!(f, "DealActive"),
+            DealStatus::DealCompleted => write!(f, "DealCompleted"),
+            DealStatus::DealFinalized => write!(f, "DealFinalized"),
+            DealStatus::DealTimedOut => write!(f, "DealTimedOut"),
+            DealStatus::DealCancelled => write!(f, "DealCancelled"),
+        }
+    }
+}
+
 /// DealProposal - What is submitted to the Ethereum contract to create a deal
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DealProposal {
@@ -362,7 +376,6 @@ impl Tokenize for DealProposal {
 /// OnChainDealInfo - Information about a deal that is stored on chain
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OnChainDealInfo {
-    pub deal_id: DealID,
     pub deal_start_block: BlockNum,
     pub deal_length_in_blocks: BlockNum,
     pub proof_frequency_in_blocks: BlockNum,
@@ -374,12 +387,11 @@ pub struct OnChainDealInfo {
     pub blake3_checksum: Blake3HashToken,
     pub creator_address: Address,
     pub executor_address: Address,
-    // pub deal_status: DealStatus,
+    pub deal_status: DealStatus,
 }
 
 impl Display for OnChainDealInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        writeln!(f, "Deal ID: {}", self.deal_id)?;
         writeln!(f, "Deal Start Block: {}", self.deal_start_block)?;
         writeln!(f, "Deal Length: {}", self.deal_length_in_blocks)?;
         writeln!(f, "Proof Frequency: {}", self.proof_frequency_in_blocks)?;
@@ -390,9 +402,8 @@ impl Display for OnChainDealInfo {
         writeln!(f, "File CID: {}", self.ipfs_file_cid)?;
         writeln!(f, "File Blake3 Checksum: {}", self.blake3_checksum)?;
         writeln!(f, "Creator Address: {}", self.creator_address)?;
-        write!(f, "Executor Address: {}", self.executor_address)
-        // writeln!(f, "Executor Address: {}", self.executor_address)
-        // writeln!(f, "Deal Status: {}", self.deal_status)
+        writeln!(f, "Executor Address: {}", self.executor_address)?;
+        write!(f, "Deal Status: {}", self.deal_status)
     }
 }
 
@@ -404,7 +415,6 @@ impl Tokenizable for OnChainDealInfo {
             Token::Tuple(tokens) => {
                 let mut tokens = tokens.into_iter();
                 Ok(OnChainDealInfo {
-                    deal_id: DealID::from_token(tokens.next().unwrap())?,
                     deal_start_block: BlockNum::from_token(tokens.next().unwrap())?,
                     deal_length_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
                     proof_frequency_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
@@ -416,7 +426,7 @@ impl Tokenizable for OnChainDealInfo {
                     blake3_checksum: Blake3HashToken::from_token(tokens.next().unwrap())?,
                     creator_address: Address::from_token(tokens.next().unwrap())?,
                     executor_address: Address::from_token(tokens.next().unwrap())?,
-                    // deal_status: DealStatus::from_token(tokens.next().unwrap())?,
+                    deal_status: DealStatus::from_token(tokens.next().unwrap())?,
                 })
             }
             other => Err(InvalidOutputType(format!(
@@ -427,7 +437,6 @@ impl Tokenizable for OnChainDealInfo {
     }
     fn into_token(self) -> Token {
         Token::Tuple(vec![
-            self.deal_id.into_token(),
             self.deal_start_block.into_token(),
             self.deal_length_in_blocks.into_token(),
             self.proof_frequency_in_blocks.into_token(),
@@ -439,7 +448,7 @@ impl Tokenizable for OnChainDealInfo {
             self.blake3_checksum.into_token(),
             self.creator_address.into_token(),
             self.executor_address.into_token(),
-            // self.deal_status.into_token(),
+            self.deal_status.into_token(),
         ])
     }
 }
