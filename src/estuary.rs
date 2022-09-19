@@ -10,13 +10,13 @@ use std::fmt;
 #[derive(Deserialize)]
 #[allow(unused)]
 pub struct Content {
-    id: u32,
+    pub id: u64,
     #[serde(rename = "cid", deserialize_with = "des_cid_from_map")]
-    cid_str: String,
+    pub cid_str: String,
     #[serde(rename = "dealId")]
-    deal_id: u32,
-    name: String,
-    size: u32,
+    pub deal_id: u64,
+    pub name: String,
+    pub size: u64,
 }
 
 impl fmt::Display for Content {
