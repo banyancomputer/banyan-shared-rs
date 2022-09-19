@@ -338,7 +338,7 @@ impl Display for DealProposal {
         writeln!(f, "Token Denomination: {}", self.erc20_token_denomination)?;
         writeln!(f, "File Size: {}", self.file_size)?;
         writeln!(f, "File CID: {}", self.ipfs_file_cid)?;
-        writeln!(f, "File Blake3 Checksum: {}", self.blake3_checksum)
+        write!(f, "File Blake3 Checksum: {}", self.blake3_checksum)
     }
 }
 
@@ -390,7 +390,8 @@ impl Display for OnChainDealInfo {
         writeln!(f, "File CID: {}", self.ipfs_file_cid)?;
         writeln!(f, "File Blake3 Checksum: {}", self.blake3_checksum)?;
         writeln!(f, "Creator Address: {}", self.creator_address)?;
-        writeln!(f, "Executor Address: {}", self.executor_address)
+        write!(f, "Executor Address: {}", self.executor_address)
+        // writeln!(f, "Executor Address: {}", self.executor_address)
         // writeln!(f, "Deal Status: {}", self.deal_status)
     }
 }
