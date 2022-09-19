@@ -49,31 +49,25 @@ impl Default for EthClient {
     /// Build a new EthClient from the environment
     // TODO kind sweet error handling
     fn default() -> Self {
-        dbg!("Initializing EthClient from environment");
         // Read the Api Url from the environment. Default to the mainnet Infura API
         let api_url = env::var("ETH_API_URL")
             .unwrap_or_else(|_| "https://mainnet.infura.io/v3/".parse().unwrap());
-        dbg!(format!("  API_URL: {}", &api_url));
         // Read the Api Key from the environment. Raise an error if it is not set
         let api_key = env::var("ETH_API_KEY").expect("ETH_API_KEY must be set");
-        dbg!(format!("  API_KEY: {}", &api_key));
         // Try and Read the Chain ID from the environment. Default to 1 (mainnet)
         let chain_id = env::var("ETH_CHAIN_ID")
             .unwrap_or_else(|_| "1".to_string())
             .parse::<u64>()
             .ok();
-        dbg!(format!("  CHAIN_ID: {:?}", &chain_id));
         // Try and Read the Private Key from the environment. Default to None
-        // TODO bugfix this silently fails if the private key is malformatted :|
         // TODO also this is dangerous!!!! should not store privkey in env!!!
         let private_key = env::var("ETH_PRIVATE_KEY").ok();
-        dbg!(format!("  PRIVATE_KEY: {:?}", &private_key));
         // Read the Contract Address from the environment
+        // TODO: Explicit Error Raise on Unparsable Address
         let contract_address: Address = (env::var("ETH_CONTRACT_ADDRESS")
             .expect("ETH_CONTRACT_ADDRESS must be set"))
         .parse()
         .expect("ETH_CONTRACT_ADDRESS must be a valid Ethereum Address");
-        dbg!(format!("  CONTRACT_ADDRESS: {:?}", &contract_address));
         EthClient::new(api_url, api_key, chain_id, private_key, contract_address).unwrap()
     }
 }
@@ -195,41 +189,31 @@ impl EthClient {
         }
         // Borrow our signer and contract
         let signer = self.signer.as_ref().unwrap();
-        // Create a new deal
-        dbg!("Initializing new Trxn Request");
+        // Create a new deal proposal Transaction
         let data = self.contract.encode("startOffer", deal)?;
-        // TODO: Configurable Gas
-        // TODO: Implement Timeout
         let tx = TransactionRequest::new()
             .to(self.contract.address())
             .data(data)
-            .gas(gas_limit.unwrap_or(3_000_000u64)) // 3 million gas
+            .gas(gas_limit.unwrap_or(3_000_000u64)) // 3 million Wei
             .gas_price(gas_price.unwrap_or(70_000_000_000u64)) // 70 Gwei
             .chain_id(self.chain_id);
         // Sign the transaction and listen for the event
-        dbg!("Signing Request");
-        // Attempt to sign the transaction and log any errors
         let pending_tx = match signer.send_transaction(tx, None).await {
             Ok(tx) => tx,
             Err(e) => {
                 return Err(anyhow!("Error signing transaction: {}", &e.to_string()));
             }
         };
-        // let pending_tx = signer.send_transaction(tx, None).await?;
         let receipt = pending_tx.await?;
         let tx_hash = receipt.as_ref().unwrap().transaction_hash;
-        dbg!("Trxn Hash: {:?}", &tx_hash);
         let bn = receipt.as_ref().unwrap().block_number.unwrap();
-        dbg!("Block Number: {:?}", &bn);
         // TODO: More sophisticated Filter
-        // For example, filtering by creator and executor address
         let logs: Vec<NewOffer> = match self.contract.event().from_block(bn).query().await {
             Ok(logs) => logs,
-            Err(e) => return Err(anyhow!("Error listening for transaction logs: {:?} ", &e)),
+            Err(e) => return Err(anyhow!(
+                "Error listening for transaction ({:?}), logs: {:?} ", &tx_hash, &e)),
         };
-        dbg!("Logs: ", &logs);
         let log = logs.first().ok_or_else(|| anyhow!("No logs found"))?;
-        dbg!("Log: {:?}", &log);
         Ok(DealID(log.offer_id.as_u64()))
     }
 
