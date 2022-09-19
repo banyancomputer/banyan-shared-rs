@@ -86,14 +86,18 @@ impl EstuaryClient {
     /// * `deal_id` - The Deal ID to use for the file
     /// * `b3_hash` - The Blake3 Hash of the file
     /// ```no_run
+    /// use anyhow::{Result, Error};
     /// use  banyan_shared::estuary::EstuaryClient;
-    ///
-    /// let client = EstuaryClient::default();
-    /// client.stage_file(
-    ///     tokio::fs::File::open("path_to_file.txt").await?,
-    ///     "0".to_string(),
-    ///     "hash".to_string()
-    /// );
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///     let client = EstuaryClient::default();
+    ///     client.stage_file(
+    ///         "path_to_file.txt".to_string(),
+    ///         "0".to_string(),
+    ///         "hash".to_string()
+    ///     ).await?;
+    ///    Ok(())
+    /// }
     /// ```
     /// # Panics
     /// * If there is an error reading the file
@@ -156,9 +160,14 @@ impl EstuaryClient {
 
     /// Get the First 500 pieces of Content from Estuary
     /// ```no_run
-    /// use crate::estuary::EstuaryClient;
-    /// let client = EstuaryClient::default();
-    /// let content = client.get_content().await?;
+    /// use anyhow::{Result, Error};
+    /// use  banyan_shared::estuary::EstuaryClient;
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///     let client = EstuaryClient::default();
+    ///     let content = client.get_content().await?;
+    ///     Ok(())
+    /// }
     /// ```
     /// # Panics
     /// * If there is an error sending the request

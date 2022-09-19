@@ -330,6 +330,7 @@ impl Tokenize for DealProposal {
 /// OnChainDealInfo - Information about a deal that is stored on chain
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OnChainDealInfo {
+    pub deal_id: DealID,
     pub deal_start_block: BlockNum,
     pub deal_length_in_blocks: BlockNum,
     pub proof_frequency_in_blocks: BlockNum,
@@ -341,7 +342,7 @@ pub struct OnChainDealInfo {
     pub blake3_checksum: Blake3HashToken,
     pub creator_address: Address,
     pub executor_address: Address,
-    pub deal_status: DealStatus,
+    // pub deal_status: DealStatus,
 }
 
 /// Impl Tokenizable for onChainDealInfo - This allows us to treat the struct as a Token with ethers
@@ -351,6 +352,7 @@ impl Tokenizable for OnChainDealInfo {
             Token::Tuple(tokens) => {
                 let mut tokens = tokens.into_iter();
                 Ok(OnChainDealInfo {
+                    deal_id: DealID::from_token(tokens.next().unwrap())?,
                     deal_start_block: BlockNum::from_token(tokens.next().unwrap())?,
                     deal_length_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
                     proof_frequency_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
@@ -362,7 +364,7 @@ impl Tokenizable for OnChainDealInfo {
                     blake3_checksum: Blake3HashToken::from_token(tokens.next().unwrap())?,
                     creator_address: Address::from_token(tokens.next().unwrap())?,
                     executor_address: Address::from_token(tokens.next().unwrap())?,
-                    deal_status: DealStatus::from_token(tokens.next().unwrap())?,
+                    // deal_status: DealStatus::from_token(tokens.next().unwrap())?,
                 })
             }
             other => Err(InvalidOutputType(format!(
@@ -373,6 +375,7 @@ impl Tokenizable for OnChainDealInfo {
     }
     fn into_token(self) -> Token {
         Token::Tuple(vec![
+            self.deal_id.into_token(),
             self.deal_start_block.into_token(),
             self.deal_length_in_blocks.into_token(),
             self.proof_frequency_in_blocks.into_token(),
@@ -384,7 +387,7 @@ impl Tokenizable for OnChainDealInfo {
             self.blake3_checksum.into_token(),
             self.creator_address.into_token(),
             self.executor_address.into_token(),
-            self.deal_status.into_token(),
+            // self.deal_status.into_token(),
         ])
     }
 }
