@@ -4,6 +4,7 @@ use serde::{Deserialize, Deserializer};
 use serde_json::{Map, Value};
 use std::env::var;
 use tokio_util::codec::{BytesCodec, FramedRead};
+use std::fmt;
 
 /// Content - What's returned from the Estuary API /content/stats endpoint
 #[derive(Deserialize)]
@@ -16,6 +17,12 @@ pub struct Content {
     deal_id: u32,
     name: String,
     size: u32,
+}
+
+impl fmt::Display for Content {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.id, self.cid_str, self.deal_id)
+    }
 }
 
 // Note (al) - The Estuary API returns a CID as a map with a "/" key
