@@ -29,6 +29,9 @@ pub struct DealProposalBuilder {
     pub collateral_per_tib: f64,
     /// The Address of the token to use as denominator for the price and collateral, as a string
     pub erc20_token_denomination: String,
+    /// The Handle for the file to build a deal for
+    pub file: Option<std::fs::File>,
+
 }
 impl Default for DealProposalBuilder {
     fn default() -> Self {
@@ -39,26 +42,22 @@ impl Default for DealProposalBuilder {
             price_per_tib: 0.0,
             collateral_per_tib: 0.0,
             erc20_token_denomination: "0x0000000000000000000000000000000000000000".to_string(),
+            file: None,
         }
     }
 }
 
 impl DealProposalBuilder {
     /// Build a DealProposalConfig from a set of primitive types
-    ///
     /// # Arguments
-    ///
     /// * `executor_address` - The address of the executor to to propose the deal to, as a string
     /// * `deal_length_in_blocks` - The length of the deal in blocks, as an int
     /// * `proof_frequency_in_blocks` - The frequency of proofs to be submitted, as an int
     /// * `price_per_tib` - The amount of tokens to be paid to the executor per TiB, as a float
     /// * `collateral_per_tib` - The amount of tokens in collateral the executor must provide per TiB, as a float
     /// * `erc20_token_denomination` - The Address of the token to use as denominator for the price and collateral, as a string
-    ///
     /// # Returns
-    ///
     /// * `DealProposalBuilder` - A DealProposalBuilder struct
-    ///
     /// # Errors
     /// TODO: Add error handling
     pub fn new(
@@ -76,7 +75,19 @@ impl DealProposalBuilder {
             price_per_tib,
             collateral_per_tib,
             erc20_token_denomination,
+            file: None,
         }
+    }
+    
+    /// Set the file handle for the DealProposalBuilder
+    /// This is required to build a DealProposal
+    /// # Arguments
+    /// * `file_handle` - A file handle to the file to build a deal for
+    /// # Returns
+    /// * `DealProposalBuilder` - A DealProposalBuilder struct
+    pub fn with_file(mut self, file: std::fs::File) -> DealProposalBuilder {
+        self.file = Some(file);
+        self
     }
 
     /// Build a DealProposal from a DealProposalConfig
@@ -91,7 +102,10 @@ impl DealProposalBuilder {
     ///
     /// # Errors
     /// TODO: Add Errors
-    pub fn build(&self, file: &std::fs::File) -> Result<DealProposal, Error> {
+    pub fn build(&self) -> Result<DealProposal, Error> {
+        let file = self.file.as_ref().ok_or_else(|| {
+            Error::msg("No file handle provided. Please provide a file handle using the with_file method")
+        })?;
         let _file_size = file.metadata().unwrap().len();
         let num_tib = _file_size as f64 / 1024.0 / 1024.0 / 1024.0 / 1024.0;
         /* Build the DealProposal */
@@ -140,7 +154,10 @@ mod tests {
     fn test_build_deal_proposal() {
         // Important: Update the test if the file changes
         let file = File::open("abi/escrow.json").unwrap();
-        let deal_proposal = DealProposal::builder().build(&file).unwrap();
+        let deal_proposal = DealProposal::builder()
+            .with_file(file)
+            .build()
+            .unwrap();
 
         assert_eq!(
             deal_proposal.ipfs_file_cid.to_string(),

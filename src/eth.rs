@@ -170,7 +170,10 @@ impl EthClient {
     /// async fn main() {
     ///     let file = std::fs::File::open("./abi/escrow.json").unwrap();
     ///     let client = EthClient::default();
-    ///     let deal = DealProposalBuilder::default().build(&file).unwrap();
+    ///     let deal = DealProposalBuilder::default()
+    ///         .with_file(file)
+    ///         .build()
+    ///         .unwrap();
     ///     let deal_id = client.propose_deal(deal, None, None).await.unwrap();
     /// }
     /// ```
@@ -307,7 +310,10 @@ mod test {
         // Open a file to build our DealProposal
         let file = std::fs::File::open("./abi/escrow.json").unwrap();
         // Build a DealProposal from the file
-        let dp = DealProposalBuilder::default().build(&file).unwrap();
+        let dp = DealProposalBuilder::default()
+            .with_file(file)
+            .build()
+            .unwrap();
         // Init a new EthClient with our environment variables
         let eth_client = EthClient::default();
         // Send the DealProposal
