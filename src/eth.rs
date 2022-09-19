@@ -324,8 +324,9 @@ mod test {
             .await
             .expect("Failed to send deal proposal");
         // Read the deal from the contract
-        let deal = eth_client.get_deal(deal_id).await.unwrap();
+        let _deal = eth_client.get_deal(deal_id).await.unwrap();
         // Assert that the deal we read is the same as the one we sent
-        assert_eq!(deal.deal_id, deal_id);
+        //assert_eq!(dp, deal);
+        unimplemented!("write me :)")
     }
 }

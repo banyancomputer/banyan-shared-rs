@@ -23,9 +23,6 @@ impl CidToken {
     pub fn cid(&self) -> Cid {
         self.0
     }
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
 }
 
 /// Impl Tokenizable for CidToken - This allows us to use CidToken as a Token in the ethers crate
@@ -374,7 +371,7 @@ impl Tokenize for DealProposal {
 
 // TODO: Re-incorporate DealStatus
 /// OnChainDealInfo - Information about a deal that is stored on chain
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OnChainDealInfo {
     pub deal_start_block: BlockNum,
     pub deal_length_in_blocks: BlockNum,
