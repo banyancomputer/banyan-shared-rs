@@ -225,33 +225,14 @@ impl Default for TokenMultiplier {
 
 /// Multiply a TokenMultiplier as a float and return the result as TokenAmount
 impl Mul<f64> for TokenMultiplier {
-    type Output = TokenAmount;
+    type Output = U256;
     fn mul(self, other: f64) -> TokenAmount {
         let amount = (self.0 as f64 * other).round() as u64;
         if amount == 0 {
-            TokenAmount(1) // This is the smallest a TokenAmount can be
+            U256::from(1) // This is the smallest a TokenAmount can be
         } else {
-            TokenAmount(amount)
+            U256::from(amount)
         }
-    }
-}
-
-/// Token Amount - A wrapper around a u64 to rep
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
-pub struct TokenAmount(pub u64);
-
-impl Tokenizable for TokenAmount {
-    fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
-        match token {
-            Token::Uint(u) => Ok(TokenAmount(u.as_u64())),
-            other => Err(InvalidOutputType(format!(
-                "Expected `Token::Uint()`, got {:?}",
-                other
-            ))),
-        }
-    }
-    fn into_token(self) -> Token {
-        Token::Uint(self.0.into())
     }
 }
 
@@ -315,13 +296,13 @@ pub struct DealProposal {
     /// The frequency with which to submit proofs to chain
     pub proof_frequency_in_blocks: BlockNum,
     /// The amount of tokens to pay to the executor
-    pub price: TokenAmount,
+    pub price: U256,
     /// The amount of collateral the executor must post
-    pub collateral: TokenAmount,
+    pub collateral: U256,
     /// The token to use for payment
     pub erc20_token_denomination: Address,
     /// The File size of the data to be stored
-    pub file_size: U256,
+    pub file_size: U256, // TODO: Change this to a U64
     /// The CID of the data to be stored
     pub ipfs_file_cid: CidToken,
     /// The blake3 hash of the data to be stored
@@ -348,7 +329,6 @@ impl Tokenize for DealProposal {
 /// OnChainDealInfo - Information about a deal that is stored on chain
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct OnChainDealInfo {
-    pub deal_id: DealID,
     pub deal_start_block: BlockNum,
     pub deal_length_in_blocks: BlockNum,
     pub proof_frequency_in_blocks: BlockNum,
@@ -360,7 +340,7 @@ pub struct OnChainDealInfo {
     pub blake3_checksum: Blake3HashToken,
     pub creator_address: Address,
     pub executor_address: Address,
-    // pub deal_status: DealStatus,
+    pub deal_status: DealStatus,
 }
 
 /// Impl Tokenizable for onChainDealInfo - This allows us to treat the struct as a Token with ethers
@@ -370,7 +350,6 @@ impl Tokenizable for OnChainDealInfo {
             Token::Tuple(tokens) => {
                 let mut tokens = tokens.into_iter();
                 Ok(OnChainDealInfo {
-                    deal_id: DealID::from_token(tokens.next().unwrap())?,
                     deal_start_block: BlockNum::from_token(tokens.next().unwrap())?,
                     deal_length_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
                     proof_frequency_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
@@ -382,7 +361,7 @@ impl Tokenizable for OnChainDealInfo {
                     blake3_checksum: Blake3HashToken::from_token(tokens.next().unwrap())?,
                     creator_address: Address::from_token(tokens.next().unwrap())?,
                     executor_address: Address::from_token(tokens.next().unwrap())?,
-                    // deal_status: DealStatus::from_token(tokens.next().unwrap())?,
+                    deal_status: DealStatus::from_token(tokens.next().unwrap())?,
                 })
             }
             other => Err(InvalidOutputType(format!(
@@ -393,7 +372,6 @@ impl Tokenizable for OnChainDealInfo {
     }
     fn into_token(self) -> Token {
         Token::Tuple(vec![
-            self.deal_id.into_token(),
             self.deal_start_block.into_token(),
             self.deal_length_in_blocks.into_token(),
             self.proof_frequency_in_blocks.into_token(),
@@ -405,7 +383,7 @@ impl Tokenizable for OnChainDealInfo {
             self.blake3_checksum.into_token(),
             self.creator_address.into_token(),
             self.executor_address.into_token(),
-            // self.deal_status.into_token(),
+            self.deal_status.into_token(),
         ])
     }
 }
