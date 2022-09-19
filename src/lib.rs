@@ -1,3 +1,5 @@
+#![deny(unused_crate_dependencies)]
+
 pub mod deals;
 pub mod estuary;
 pub mod eth;
