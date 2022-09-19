@@ -223,13 +223,14 @@ impl Default for TokenMultiplier {
     }
 }
 
-/// Multiply a TokenMultiplier as a float and return the result as TokenAmount
+/// Multiply a TokenMultiplier as a float and return the result as U256
+/// Warning: Non-Deterministic
 impl Mul<f64> for TokenMultiplier {
     type Output = U256;
-    fn mul(self, other: f64) -> TokenAmount {
+    fn mul(self, other: f64) -> U256 {
         let amount = (self.0 as f64 * other).round() as u64;
         if amount == 0 {
-            U256::from(1) // This is the smallest a TokenAmount can be
+            U256::from(1) // This is the smallest a U256 can be
         } else {
             U256::from(amount)
         }
@@ -327,13 +328,13 @@ impl Tokenize for DealProposal {
 
 // TODO: Re-incorporate DealStatus
 /// OnChainDealInfo - Information about a deal that is stored on chain
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OnChainDealInfo {
     pub deal_start_block: BlockNum,
     pub deal_length_in_blocks: BlockNum,
     pub proof_frequency_in_blocks: BlockNum,
-    pub price: TokenAmount,
-    pub collateral: TokenAmount,
+    pub price: U256,
+    pub collateral: U256,
     pub erc20_token_denomination: Address,
     pub ipfs_file_cid: CidToken,
     pub file_size: U256,
@@ -353,8 +354,8 @@ impl Tokenizable for OnChainDealInfo {
                     deal_start_block: BlockNum::from_token(tokens.next().unwrap())?,
                     deal_length_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
                     proof_frequency_in_blocks: BlockNum::from_token(tokens.next().unwrap())?,
-                    price: TokenAmount::from_token(tokens.next().unwrap())?,
-                    collateral: TokenAmount::from_token(tokens.next().unwrap())?,
+                    price: U256::from_token(tokens.next().unwrap())?,
+                    collateral: U256::from_token(tokens.next().unwrap())?,
                     erc20_token_denomination: Address::from_token(tokens.next().unwrap())?,
                     ipfs_file_cid: CidToken::from_token(tokens.next().unwrap())?,
                     file_size: U256::from_token(tokens.next().unwrap())?,

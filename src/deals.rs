@@ -34,8 +34,7 @@ impl Default for DealProposalBuilder {
     fn default() -> Self {
         DealProposalBuilder {
             executor_address: "0x0000000000000000000000000000000000000000".to_string(),
-            deal_length_in_blocks: 0,
-            /// TODO: Call API to get a good value
+            deal_length_in_blocks: 0, // TODO: Set this from API call
             proof_frequency_in_blocks: 10,
             price_per_tib: 0.0,
             collateral_per_tib: 0.0,
@@ -96,7 +95,8 @@ impl DealProposalBuilder {
         let _file_size = file.metadata().unwrap().len();
         let num_tib = _file_size as f64 / 1024.0 / 1024.0 / 1024.0 / 1024.0;
         /* Build the DealProposal */
-        // parse the executor address as a Token\
+
+        // parse the executor address as a Token
         let executor_address = self.executor_address.parse::<Address>().unwrap();
 
         // Set the duration of the deal
