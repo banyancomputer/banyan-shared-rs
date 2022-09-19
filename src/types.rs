@@ -332,15 +332,15 @@ impl Display for DealProposal {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
-            "Executor: {}\n
-            Deal Length: {}\n
-            Proof Frequency: {}\n
-            Bounty: {}\n
-            Collateral: {}\n
-            Token Denomination: {}\n
-            File Size: {}\n
-            IPFS CID: {}\n
-            Blake3 Hash: {}\n",
+            "Executor: {}
+            Deal Length: {}
+            Proof Frequency: {}
+            Bounty: {}
+            Collateral: {}
+            Token Denomination: {}
+            File Size: {}
+            IPFS CID: {}
+            Blake3 Hash: {}",
             self.executor_address,
             self.deal_length_in_blocks.0,
             self.proof_frequency_in_blocks.0,
@@ -393,18 +393,18 @@ impl Display for OnChainDealInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
-            "Deal ID: {}\n
-            Deal Start Block: {}\n
-            Deal Length: {}\n
-            Proof Frequency: {}\n
-            Bounty: {}\n
-            Collateral: {}\n
-            Token Denomination: {}\n
-            File Size: {}\n
-            CID: {}\n
-            Blake3 Hash: {}\n
-            Creator Address: {}\n
-            Executor Address: {}\n",
+            "Deal ID: {}
+            Deal Start Block: {}
+            Deal Length: {}
+            Proof Frequency: {}
+            Bounty: {}
+            Collateral: {}
+            Token Denomination: {}
+            File Size: {}
+            CID: {}
+            Blake3 Hash: {}
+            Creator Address: {}
+            Executor Address: {}",
             self.deal_id,
             self.deal_start_block,
             self.deal_length_in_blocks,
