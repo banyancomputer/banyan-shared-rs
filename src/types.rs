@@ -332,15 +332,7 @@ impl Display for DealProposal {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
-            "Executor: {}
-            Deal Length: {}
-            Proof Frequency: {}
-            Bounty: {}
-            Collateral: {}
-            Token Denomination: {}
-            File Size: {}
-            IPFS CID: {}
-            Blake3 Hash: {}",
+            "Executor Address: {}, Deal Length: {}, Proof Frequency: {}, Price: {}, Collateral: {}, ERC20 Token Denomination: {}, File Size: {}, IPFS CID: {}, Blake3 Checksum: {}",
             self.executor_address,
             self.deal_length_in_blocks.0,
             self.proof_frequency_in_blocks.0,
