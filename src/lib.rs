@@ -4,3 +4,4 @@ pub mod hash;
 pub mod ipfs;
 pub mod proofs;
 pub mod types;
+pub mod estuary;
