@@ -7,7 +7,7 @@ use ethers::{
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sled::IVec;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::ops::{Add, Mul, Sub};
 
 /// A Wrapper around the CID struct from the cid crate
@@ -15,7 +15,7 @@ use std::ops::{Add, Mul, Sub};
 pub struct CidToken(pub Cid);
 
 impl Display for CidToken {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
@@ -69,6 +69,12 @@ impl<'de> Deserialize<'de> for CidToken {
 /// A Wrapper around the Hash struct from the bao crate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Blake3HashToken(pub B3Hash);
+
+impl Display for Blake3HashToken {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.to_hex())
+    }
+}
 
 impl Blake3HashToken {
     /// Return the underlying bao::Hash
@@ -131,6 +137,12 @@ impl DealID {
     }
 }
 
+impl Display for DealID {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.id())
+    }
+}
+
 /// Imple Tokenizable for DealID - this allows us to treat it like a Token with with Ethers Crate
 impl Tokenizable for DealID {
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
@@ -166,6 +178,12 @@ impl From<IVec> for DealID {
 /// Block Number - a wrapper around u64 to specify an Ethereum block number
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct BlockNum(pub u64);
+
+impl Display for BlockNum {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.0)
+    }
+}
 
 /// Imple Tokenizable for BlockNum - this allows us to treat it like a Token with with Ethers Crate
 impl Tokenizable for BlockNum {
@@ -310,6 +328,32 @@ pub struct DealProposal {
     pub blake3_checksum: Blake3HashToken,
 }
 
+impl Display for DealProposal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(
+            f,
+            "Executor: {}\n
+            Deal Length: {}\n
+            Proof Frequency: {}\n
+            Bounty: {}\n
+            Collateral: {}\n
+            Token Denomination: {}\n
+            File Size: {}\n
+            IPFS CID: {}\n
+            Blake3 Hash: {}\n",
+            self.executor_address,
+            self.deal_length_in_blocks.0,
+            self.proof_frequency_in_blocks.0,
+            self.price,
+            self.collateral,
+            self.erc20_token_denomination,
+            self.file_size,
+            self.ipfs_file_cid,
+            self.blake3_checksum,
+        )
+    }
+}
+
 impl Tokenize for DealProposal {
     fn into_tokens(self) -> Vec<Token> {
         vec![
@@ -344,6 +388,39 @@ pub struct OnChainDealInfo {
     pub executor_address: Address,
     // pub deal_status: DealStatus,
 }
+
+impl Display for OnChainDealInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(
+            f,
+            "Deal ID: {}\n
+            Deal Start Block: {}\n
+            Deal Length: {}\n
+            Proof Frequency: {}\n
+            Bounty: {}\n
+            Collateral: {}\n
+            Token Denomination: {}\n
+            File Size: {}\n
+            CID: {}\n
+            Blake3 Hash: {}\n
+            Creator Address: {}\n
+            Executor Address: {}\n",
+            self.deal_id,
+            self.deal_start_block,
+            self.deal_length_in_blocks,
+            self.proof_frequency_in_blocks,
+            self.price,
+            self.collateral,
+            self.erc20_token_denomination,
+            self.ipfs_file_cid,
+            self.file_size,
+            self.blake3_checksum,
+            self.creator_address,
+            self.executor_address,
+        )
+    }
+}
+
 
 /// Impl Tokenizable for onChainDealInfo - This allows us to treat the struct as a Token with ethers
 impl Tokenizable for OnChainDealInfo {
