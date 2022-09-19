@@ -393,18 +393,7 @@ impl Display for OnChainDealInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
-            "Deal ID: {}
-            Deal Start Block: {}
-            Deal Length: {}
-            Proof Frequency: {}
-            Bounty: {}
-            Collateral: {}
-            Token Denomination: {}
-            File Size: {}
-            CID: {}
-            Blake3 Hash: {}
-            Creator Address: {}
-            Executor Address: {}",
+            "Deal ID: {}, Creator: {}, Executor: {}, Deal Start: {}, Deal Length: {}, Proof Frequency: {}, Price: {}, Collateral: {}, Token Denomination: {}, File Size: {}, IPFS CID: {}, Blake3 Hash: {}",
             self.deal_id,
             self.deal_start_block,
             self.deal_length_in_blocks,
