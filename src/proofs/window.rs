@@ -58,15 +58,6 @@ mod tests {
 
     // in this test, we have a deal with length 21, proof window of size 5, and start block is 3
     use super::*;
-    // TODO write these tests!
-    //#[test]
-    //fn get_the_right_window_works() {
-    //    unimplemented!("fail");
-    //}
-    //#[test]
-    //fn get_the_next_window_works() {
-    //    unimplemented!("fail");
-    //}
     #[test]
     fn get_num_windows_works() {
         let (deal_length1, window_size1) = (BlockNum(20), BlockNum(2));
