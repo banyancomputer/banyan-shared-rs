@@ -93,8 +93,8 @@ impl EstuaryClient {
     ///     let client = EstuaryClient::default();
     ///     client.stage_file(
     ///         "path_to_file.txt".to_string(),
-    ///         "0".to_string(),
-    ///         "hash".to_string()
+    ///         Some("0".to_string()),
+    ///         Some("hash".to_string())
     ///     ).await?;
     ///    Ok(())
     /// }
@@ -105,15 +105,15 @@ impl EstuaryClient {
     /// Stage a File on Estuary
     /// # Arguments
     /// * `file_path` - The path to the file to stage
-    /// * `deal_id_str` - The Deal ID to use for the file, as a String
-    /// * `b3_hash_str` - The Blake3 Hash of the file, as a Hex String
+    /// * `deal_id_str` - The (optional) Deal ID to use for the file, as a String
+    /// * `b3_hash_str` - The (optional) Blake3 Hash of the file, as a Hex String
     /// # Returns
     /// * `Result<(), Error>` - Errors if there is an error staging the file
     pub async fn stage_file(
         &self,
         file_path: String,
-        deal_id_str: String,
-        b3_hash_str: String,
+        deal_id_str: Option<String>,
+        b3_hash_str: Option<String>,
     ) -> Result<(), Error> {
         if self.estuary_api_key.is_none() {
             panic!("No Estuary API Key is set");
@@ -131,10 +131,19 @@ impl EstuaryClient {
             .mime_str("text/plain")?;
         // Create the multipart form
         let form = multipart::Form::new()
-            .part("data", some_file) //add the file part
-            .text("dealId", deal_id_str) //add the dealId
-            .text("blake3Hash", b3_hash_str); //add the b3Hash
-                                              // Initialize the Request
+            .part("data", some_file); //add the file part
+        // Add the Deal ID to the form, if it exists
+        let form = if let Some(deal_id_str) = deal_id_str {
+            form.text("dealId", deal_id_str)
+        } else {
+            form
+        };
+        // Add the Blake3 Hash to the form, if it exists
+        let form = if let Some(b3_hash_str) = b3_hash_str {
+            form.text("b3Hash", b3_hash_str)
+        } else {
+            form
+        };
         let res = client
             // POST to the /content/add endpoint
             .post(format!("{}/content/add", self.estuary_api_hostname))
@@ -222,7 +231,7 @@ mod test {
         let b3_hash_str =
             "a291f28711c5238dc415f64a5525ff428f3fd6fd45fca181384a3f31091b5d81".to_string();
         client
-            .stage_file("Cargo.toml".to_string(), deal_id_str, b3_hash_str)
+            .stage_file("Cargo.toml".to_string(), Some(deal_id_str), Some(b3_hash_str))
             .await
             .unwrap();
         return;
