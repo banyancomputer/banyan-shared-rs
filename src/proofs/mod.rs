@@ -27,7 +27,7 @@ pub fn compute_random_block_choice_from_hash(block_hash: H256, file_length: u64)
 }
 
 // TODO: eventually do not load the entire file into memory.
-pub fn gen_obao<R: Read>(mut reader: R) -> Result<(Vec<u8>, bao::Hash)> {
+pub fn gen_obao<R: Read>(reader: &mut R) -> Result<(Vec<u8>, bao::Hash)> {
     let mut file_content = Vec::new();
     reader
         .read_to_end(&mut file_content)
@@ -38,20 +38,17 @@ pub fn gen_obao<R: Read>(mut reader: R) -> Result<(Vec<u8>, bao::Hash)> {
 }
 
 pub async fn gen_proof<R: Read + Seek>(
-    block_number: BlockNum,
+    _block_number: BlockNum,
     block_hash: H256,
     file_handle: R,
     obao_handle: R,
     file_length: u64,
-) -> Result<Proof> {
+) -> Result<Vec<u8>> {
     let (chunk_offset, chunk_size) = compute_random_block_choice_from_hash(block_hash, file_length);
 
     let mut bao_proof_data = vec![];
     let _ = SliceExtractor::new_outboard(file_handle, obao_handle, chunk_offset, chunk_size)
         .read_to_end(&mut bao_proof_data)?;
 
-    Ok(Proof {
-        block_number,
-        bao_proof_data,
-    })
+    Ok(bao_proof_data)
 }

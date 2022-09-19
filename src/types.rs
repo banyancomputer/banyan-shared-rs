@@ -2,7 +2,8 @@ use blake3::Hash as B3Hash;
 use cid::Cid;
 use ethers::{
     abi::{InvalidOutputType, Token, Tokenizable, Tokenize},
-    types::{Address, U256},
+    // TODO: Can we import this somewhere / do we need this?
+    types::{Address, Bytes, U256},
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sled::IVec;
@@ -145,7 +146,7 @@ impl Tokenizable for DealID {
         match token {
             Token::Uint(u) => Ok(DealID(u.as_u64())),
             other => Err(InvalidOutputType(format!(
-                "Expected `Token::Uint()`, got {:?}",
+                "Expected `Token::Uint()`, got {:?} for DealID",
                 other
             ))),
         }
@@ -187,7 +188,7 @@ impl Tokenizable for BlockNum {
         match token {
             Token::Uint(u) => Ok(BlockNum(u.as_u64())),
             other => Err(InvalidOutputType(format!(
-                "Expected `Token::Uint()`, got {:?}",
+                "Expected `Token::Uint()`, got {:?} for BlockNum",
                 other
             ))),
         }
@@ -211,6 +212,13 @@ impl Sub for BlockNum {
     }
 }
 
+impl Mul for BlockNum {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self {
+        BlockNum(self.0 * other.0)
+    }
+}
+
 impl Mul<u64> for BlockNum {
     type Output = Self;
     fn mul(self, other: u64) -> Self {
@@ -223,6 +231,20 @@ impl Mul<usize> for BlockNum {
     fn mul(self, other: usize) -> Self {
         let u = other as u64;
         BlockNum(self.0 * u)
+    }
+}
+
+impl Div for BlockNum {
+    type Output = Self;
+    fn div(self, other: Self) -> Self {
+        BlockNum(self.0 / other.0)
+    }
+}
+
+impl Rem for BlockNum {
+    type Output = Self;
+    fn rem(self, other: Self) -> Self {
+        BlockNum(self.0 % other.0)
     }
 }
 
@@ -246,13 +268,13 @@ impl Mul<f64> for TokenMultiplier {
         if amount == 0 {
             U256::from(1) // This is the smallest a U256 can be
         } else {
-            U256::from(amount)
+            TokenAmount(amount)
         }
     }
 }
 
 /// An Enum describing the different states a deal can be in
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Copy)]
 pub enum DealStatus {
     /// The deal does not exist
     Non = 0,
@@ -289,12 +311,12 @@ impl Tokenizable for DealStatus {
                 6 => Ok(DealStatus::DealTimedOut),
                 7 => Ok(DealStatus::DealCancelled),
                 _ => Err(InvalidOutputType(format!(
-                    "Expected `Token::Uint()`, got {:?}",
+                    "Expected `Token::Uint()`, got {:?} for Deal Status",
                     token
                 ))),
             },
             other => Err(InvalidOutputType(format!(
-                "Expected `Token::Uint()`, got {:?}",
+                "Expected `Token::Uint()`, got {:?} for Deal Status 2",
                 other
             ))),
         }
@@ -457,8 +479,35 @@ impl OnChainDealInfo {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Proof {
-    pub block_number: BlockNum,
-    pub bao_proof_data: Vec<u8>,
+    pub bao_proof_data: Bytes,
+    pub deal_id: DealID,
+    pub target_block_start: BlockNum,
+}
+
+impl Tokenizable for Proof {
+    fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
+        match token {
+            Token::Tuple(tokens) => {
+                let mut tokens = tokens.into_iter();
+                Ok(Proof {
+                    bao_proof_data: Bytes::from_token(tokens.next().unwrap())?,
+                    deal_id: DealID::from_token(tokens.next().unwrap())?,
+                    target_block_start: BlockNum::from_token(tokens.next().unwrap())?,
+                })
+            }
+            other => Err(InvalidOutputType(format!(
+                "Expected `Tuple`, got {:?}",
+                other
+            ))),
+        }
+    }
+    fn into_token(self) -> Token {
+        Token::Tuple(vec![
+            self.bao_proof_data.into_token(),
+            self.deal_id.into_token(),
+            self.target_block_start.into_token(),
+        ])
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
