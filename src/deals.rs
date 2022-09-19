@@ -78,6 +78,8 @@ impl DealProposalBuilder {
             file: None,
         }
     }
+
+    /* Builder Populators */
     
     /// Set the file handle for the DealProposalBuilder
     /// This is required to build a DealProposal
@@ -89,6 +91,44 @@ impl DealProposalBuilder {
         self.file = Some(file);
         self
     }
+
+    /// Set the Executor Address for the DealProposalBuilder
+    pub fn with_executor_address(mut self, executor_address: String) -> DealProposalBuilder {
+        self.executor_address = executor_address;
+        self
+    }
+
+    /// Set the Deal Length in Blocks for the DealProposalBuilder
+    pub fn with_deal_length_in_blocks(mut self, deal_length_in_blocks: u64) -> DealProposalBuilder {
+        self.deal_length_in_blocks = deal_length_in_blocks;
+        self
+    }
+
+    /// Set the Proof Frequency in Blocks for the DealProposalBuilder
+    pub fn with_proof_frequency_in_blocks(mut self, proof_frequency_in_blocks: u64) -> DealProposalBuilder {
+        self.proof_frequency_in_blocks = proof_frequency_in_blocks;
+        self
+    }
+
+    /// Set the Price Per TiB for the DealProposalBuilder
+    pub fn with_price_per_tib(mut self, price_per_tib: f64) -> DealProposalBuilder {
+        self.price_per_tib = price_per_tib;
+        self
+    }
+
+    /// Set the Collateral Per TiB for the DealProposalBuilder
+    pub fn with_collateral_per_tib(mut self, collateral_per_tib: f64) -> DealProposalBuilder {
+        self.collateral_per_tib = collateral_per_tib;
+        self
+    }
+
+    /// Set the ERC20 Token Denomination for the DealProposalBuilder
+    pub fn with_erc20_token_denomination(mut self, erc20_token_denomination: String) -> DealProposalBuilder {
+        self.erc20_token_denomination = erc20_token_denomination;
+        self
+    }
+
+    /* Build Methods */
 
     /// Build a DealProposal from a DealProposalConfig
     ///
