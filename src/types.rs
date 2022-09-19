@@ -407,7 +407,6 @@ impl Display for OnChainDealInfo {
     }
 }
 
-
 /// Impl Tokenizable for onChainDealInfo - This allows us to treat the struct as a Token with ethers
 impl Tokenizable for OnChainDealInfo {
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {

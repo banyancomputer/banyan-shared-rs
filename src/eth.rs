@@ -210,8 +210,13 @@ impl EthClient {
         // TODO: More sophisticated Filter
         let logs: Vec<NewOffer> = match self.contract.event().from_block(bn).query().await {
             Ok(logs) => logs,
-            Err(e) => return Err(anyhow!(
-                "Error listening for transaction ({:?}), logs: {:?} ", &tx_hash, &e)),
+            Err(e) => {
+                return Err(anyhow!(
+                    "Error listening for transaction ({:?}), logs: {:?} ",
+                    &tx_hash,
+                    &e
+                ))
+            }
         };
         let log = logs.first().ok_or_else(|| anyhow!("No logs found"))?;
         Ok(DealID(log.offer_id.as_u64()))

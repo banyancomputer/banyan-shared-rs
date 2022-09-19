@@ -3,8 +3,8 @@ use reqwest::{multipart, Body, Client};
 use serde::{Deserialize, Deserializer};
 use serde_json::{Map, Value};
 use std::env::var;
-use tokio_util::codec::{BytesCodec, FramedRead};
 use std::fmt;
+use tokio_util::codec::{BytesCodec, FramedRead};
 
 /// Content - What's returned from the Estuary API /content/stats endpoint
 #[derive(Deserialize)]
@@ -137,9 +137,8 @@ impl EstuaryClient {
             .file_name(file_path)
             .mime_str("text/plain")?;
         // Create the multipart form
-        let form = multipart::Form::new()
-            .part("data", some_file); //add the file part
-        // Add the Deal ID to the form, if it exists
+        let form = multipart::Form::new().part("data", some_file); //add the file part
+                                                                   // Add the Deal ID to the form, if it exists
         let form = if let Some(deal_id_str) = deal_id_str {
             form.text("dealId", deal_id_str)
         } else {

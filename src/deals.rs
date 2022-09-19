@@ -31,7 +31,6 @@ pub struct DealProposalBuilder {
     pub erc20_token_denomination: String,
     /// The Handle for the file to build a deal for
     pub file: Option<std::fs::File>,
-
 }
 impl Default for DealProposalBuilder {
     fn default() -> Self {
@@ -80,7 +79,7 @@ impl DealProposalBuilder {
     }
 
     /* Builder Populators */
-    
+
     /// Set the file handle for the DealProposalBuilder
     /// This is required to build a DealProposal
     /// # Arguments
@@ -105,7 +104,10 @@ impl DealProposalBuilder {
     }
 
     /// Set the Proof Frequency in Blocks for the DealProposalBuilder
-    pub fn with_proof_frequency_in_blocks(mut self, proof_frequency_in_blocks: u64) -> DealProposalBuilder {
+    pub fn with_proof_frequency_in_blocks(
+        mut self,
+        proof_frequency_in_blocks: u64,
+    ) -> DealProposalBuilder {
         self.proof_frequency_in_blocks = proof_frequency_in_blocks;
         self
     }
@@ -123,7 +125,10 @@ impl DealProposalBuilder {
     }
 
     /// Set the ERC20 Token Denomination for the DealProposalBuilder
-    pub fn with_erc20_token_denomination(mut self, erc20_token_denomination: String) -> DealProposalBuilder {
+    pub fn with_erc20_token_denomination(
+        mut self,
+        erc20_token_denomination: String,
+    ) -> DealProposalBuilder {
         self.erc20_token_denomination = erc20_token_denomination;
         self
     }
@@ -144,7 +149,9 @@ impl DealProposalBuilder {
     /// TODO: Add Errors
     pub fn build(&self) -> Result<DealProposal, Error> {
         let file = self.file.as_ref().ok_or_else(|| {
-            Error::msg("No file handle provided. Please provide a file handle using the with_file method")
+            Error::msg(
+                "No file handle provided. Please provide a file handle using the with_file method",
+            )
         })?;
         let _file_size = file.metadata().unwrap().len();
         let num_tib = _file_size as f64 / 1024.0 / 1024.0 / 1024.0 / 1024.0;
@@ -194,10 +201,7 @@ mod tests {
     fn test_build_deal_proposal() {
         // Important: Update the test if the file changes
         let file = File::open("abi/escrow.json").unwrap();
-        let deal_proposal = DealProposal::builder()
-            .with_file(file)
-            .build()
-            .unwrap();
+        let deal_proposal = DealProposal::builder().with_file(file).build().unwrap();
 
         assert_eq!(
             deal_proposal.ipfs_file_cid.to_string(),
