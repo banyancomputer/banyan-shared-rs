@@ -11,26 +11,26 @@ use std::ops::{Add, Mul, Sub};
 
 /// A Wrapper around the CID struct from the cid crate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct CidToken(pub Cid);
+pub struct CidWrapper(pub Cid);
 
-impl Display for CidToken {
+impl Display for CidWrapper {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
 
-impl CidToken {
+impl CidWrapper {
     pub fn cid(&self) -> Cid {
         self.0
     }
 }
 
 /// Impl Tokenizable for CidToken - This allows us to use CidToken as a Token in the ethers crate
-impl Tokenizable for CidToken {
+impl Tokenizable for CidWrapper {
     /// Convert a Token::String to a CidToken
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Token::String(s) => Ok(CidToken(Cid::try_from(s).unwrap())),
+            Token::String(s) => Ok(CidWrapper(Cid::try_from(s).unwrap())),
             other => Err(InvalidOutputType(format!(
                 "Expected `String`, got {:?}",
                 other
@@ -43,7 +43,7 @@ impl Tokenizable for CidToken {
     }
 }
 
-impl Serialize for CidToken {
+impl Serialize for CidWrapper {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -52,27 +52,27 @@ impl Serialize for CidToken {
     }
 }
 
-impl<'de> Deserialize<'de> for CidToken {
+impl<'de> Deserialize<'de> for CidWrapper {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Ok(CidToken(Cid::try_from(s).unwrap()))
+        Ok(CidWrapper(Cid::try_from(s).unwrap()))
     }
 }
 
 /// A Wrapper around the Hash struct from the bao crate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Blake3HashToken(pub B3Hash);
+pub struct Blake3Hash(pub B3Hash);
 
-impl Display for Blake3HashToken {
+impl Display for Blake3Hash {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.to_hex())
     }
 }
 
-impl Blake3HashToken {
+impl Blake3Hash {
     /// Return the underlying bao::Hash
     pub fn hash(&self) -> B3Hash {
         self.0
@@ -88,13 +88,13 @@ impl Blake3HashToken {
 }
 
 /// Impl Tokenizable for Blake3HashToken - This allows us to use CidToken as a Token in the ethers crate
-impl Tokenizable for Blake3HashToken {
+impl Tokenizable for Blake3Hash {
     fn into_token(self) -> Token {
         Token::String(self.to_hex())
     }
     fn from_token(token: Token) -> Result<Self, InvalidOutputType> {
         match token {
-            Token::String(s) => Ok(Blake3HashToken(B3Hash::from_hex(s).unwrap())),
+            Token::String(s) => Ok(Blake3Hash(B3Hash::from_hex(s).unwrap())),
             other => Err(InvalidOutputType(format!(
                 "Expected `String`, got {:?}",
                 other
@@ -103,7 +103,7 @@ impl Tokenizable for Blake3HashToken {
     }
 }
 
-impl Serialize for Blake3HashToken {
+impl Serialize for Blake3Hash {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -112,13 +112,13 @@ impl Serialize for Blake3HashToken {
     }
 }
 
-impl<'de> Deserialize<'de> for Blake3HashToken {
+impl<'de> Deserialize<'de> for Blake3Hash {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let b: [u8; 32] = <[u8; 32]>::deserialize(deserializer)?;
-        Ok(Blake3HashToken(B3Hash::from(b)))
+        Ok(Blake3Hash(B3Hash::from(b)))
     }
 }
 
@@ -334,9 +334,9 @@ pub struct DealProposal {
     /// The File size of the data to be stored
     pub file_size: U256, // TODO: Change this to a U64
     /// The CID of the data to be stored
-    pub ipfs_file_cid: CidToken,
+    pub ipfs_file_cid: CidWrapper,
     /// The blake3 hash of the data to be stored
-    pub blake3_checksum: Blake3HashToken,
+    pub blake3_checksum: Blake3Hash,
 }
 
 impl Display for DealProposal {
@@ -379,9 +379,9 @@ pub struct OnChainDealInfo {
     pub price: U256,
     pub collateral: U256,
     pub erc20_token_denomination: Address,
-    pub ipfs_file_cid: CidToken,
+    pub ipfs_file_cid: CidWrapper,
     pub file_size: U256,
-    pub blake3_checksum: Blake3HashToken,
+    pub blake3_checksum: Blake3Hash,
     pub creator_address: Address,
     pub executor_address: Address,
     pub deal_status: DealStatus,
@@ -417,9 +417,9 @@ impl Tokenizable for OnChainDealInfo {
                     price: U256::from_token(tokens.next().unwrap())?,
                     collateral: U256::from_token(tokens.next().unwrap())?,
                     erc20_token_denomination: Address::from_token(tokens.next().unwrap())?,
-                    ipfs_file_cid: CidToken::from_token(tokens.next().unwrap())?,
+                    ipfs_file_cid: CidWrapper::from_token(tokens.next().unwrap())?,
                     file_size: U256::from_token(tokens.next().unwrap())?,
-                    blake3_checksum: Blake3HashToken::from_token(tokens.next().unwrap())?,
+                    blake3_checksum: Blake3Hash::from_token(tokens.next().unwrap())?,
                     creator_address: Address::from_token(tokens.next().unwrap())?,
                     executor_address: Address::from_token(tokens.next().unwrap())?,
                     deal_status: DealStatus::from_token(tokens.next().unwrap())?,

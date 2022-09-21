@@ -1,6 +1,6 @@
 use crate::{
     hash::FileHasher,
-    types::{Blake3HashToken, BlockNum, CidToken, DealProposal, TokenMultiplier},
+    types::{Blake3Hash, BlockNum, CidWrapper, DealProposal, TokenMultiplier},
 };
 use anyhow::{Error, Result};
 use cid::Cid;
@@ -176,8 +176,8 @@ impl DealProposalBuilder {
         let (mh, b3h) = FileHasher::new(file).hash()?;
 
         // Calculate the CID of the file using Sha2-256 and Multihash
-        let blake3_checksum = Blake3HashToken(b3h);
-        let ipfs_file_cid = CidToken(Cid::new_v1(0x55, mh));
+        let blake3_checksum = Blake3Hash(b3h);
+        let ipfs_file_cid = CidWrapper(Cid::new_v1(0x55, mh));
         Ok(DealProposal {
             executor_address,
             deal_length_in_blocks,
