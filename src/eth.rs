@@ -5,14 +5,13 @@ use ethers::{
     contract::Contract,
     middleware::SignerMiddleware,
     prelude::H256,
-    providers::{Http, Middleware, Provider},
-    signers::{LocalWallet, Signer},
+    providers::{JsonRpcClient, Middleware, Provider},
+    signers::Signer,
     types::{Address, Filter, Log, TransactionRequest, U256},
 };
 use ethers_contract_derive::EthEvent;
 use lazy_static::lazy_static;
-use std::convert::TryFrom;
-use std::env;
+use std::sync::Arc;
 
 // Load the Banyan Contract ABI into Memory
 // IMPORTANT: The ABI must be updated if the contract is updated
@@ -31,48 +30,18 @@ struct NewOffer {
 }
 
 /// EthClient - Everything needed to interact with Banyan's Ethereum Stack
-pub struct EthClient {
-    /// An Eth Provider. This is required to interact with the Ethereum Blockchain.
-    provider: Provider<Http>,
+pub struct EthClient<P: JsonRpcClient> {
+    provider: Arc<Provider<P>>,
     /// The chain ID of the network we're connected to. This is Required for signing transactions.
     chain_id: u64,
-    /// An (optional) Eth Signer for singing transactions. This is required for interacting with payable functions.
-    signer: Option<SignerMiddleware<Provider<Http>, LocalWallet>>,
     /// A Deployed Solidity Contract Address. This is required to interact with the Banyan Contract.
-    contract: Contract<Provider<Http>>,
-}
-
-impl Default for EthClient {
-    /// Build a new EthClient from the environment
-    // TODO kind sweet error handling
-    fn default() -> Self {
-        // Read the Api Url from the environment. Default to the mainnet Infura API
-        let api_url = env::var("ETH_API_URL")
-            .unwrap_or_else(|_| "https://mainnet.infura.io/v3/".parse().unwrap());
-        // Read the Api Key from the environment. Raise an error if it is not set
-        let api_key = env::var("ETH_API_KEY").expect("ETH_API_KEY must be set");
-        // Try and Read the Chain ID from the environment. Default to 1 (mainnet)
-        let chain_id = env::var("ETH_CHAIN_ID")
-            .unwrap_or_else(|_| "1".to_string())
-            .parse::<u64>()
-            .ok();
-        // Try and Read the Private Key from the environment. Default to None
-        // TODO also this is dangerous!!!! should not store privkey in env!!!
-        let private_key = env::var("ETH_PRIVATE_KEY").ok();
-        // Read the Contract Address from the environment
-        // TODO: Explicit Error Raise on Unparsable Address
-        let contract_address: Address = (env::var("ETH_CONTRACT_ADDRESS")
-            .expect("ETH_CONTRACT_ADDRESS must be set"))
-        .parse()
-        .expect("ETH_CONTRACT_ADDRESS must be a valid Ethereum Address");
-        EthClient::new(api_url, api_key, chain_id, private_key, contract_address).unwrap()
-    }
+    contract: Contract<Arc<Provider<P>>>,
 }
 
 // TODO: Update docs
 /// The EthProvider is a wrapper around the ethers-rs Provider that handles all Ethereum
 /// interactions.
-impl EthClient {
+impl<P: JsonRpcClient + 'static> EthClient<P> {
     /// Create a new EthClient - Uses EthClientBuilder::new()
     /// # Arguments
     /// * `api_url` - The URL of the Ethereum API to connect to. This is required to interact with
@@ -88,45 +57,35 @@ impl EthClient {
     /// use banyan_shared::eth::EthClient;
     /// use ethers::types::Address;
     ///
-    /// let eth_client = EthClient::new(
-    ///    "https://mainnet.infura.io/v3/".to_string(),
-    ///   "API_KEY".to_string(),
-    ///    Some(1),
-    ///    Some("PRIVATE_KEY".to_string()),
-    ///    "CONTRACT_ADDRESS".parse::<Address>().unwrap(),
-    ///    // Some(10),
-    /// ).unwrap();
+    /// let provider = Provider::<Http>::try_from("https://mainnet.infura.io/v3/",)
+    ///     .expect("could not instantiate HTTP Provider");
+    /// let contract_addr =
+    ///     Address::from_str("0x0000000000000000000000000000000000000000").unwrap();
+    /// // Init a new EthClient with our environment variables
+    /// let eth_client = EthClient::new(provider, 1, contract_addr).unwrap();
     /// ```
     /// # Panics
     /// * If the API URL is invalid
     pub fn new(
-        api_url: String,
-        api_key: String,
-        chain_id: Option<u64>,
-        private_key: Option<String>,
+        provider: Provider<P>,
+        chain_id: u64,
         contract_address: Address,
         //timeout: Option<u64>,
-    ) -> Result<EthClient, Error> {
-        // Determine an API URL and Initialize the Provider
-        let url = format!("{}{}", api_url, api_key);
-        let provider = Provider::<Http>::try_from(url).expect("Failed to create provider");
+    ) -> Result<EthClient<P>, Error> {
+        // // Check if we have a private key to set up a Signer
+        // let signer = if let Some(private_key) = &private_key {
+        //     let wallet = private_key
+        //         .parse::<LocalWallet>()
+        //         .expect("Failed to parse private key");
+        //     Some(SignerMiddleware::new(
+        //         provider.clone(),
+        //         wallet.with_chain_id(chain_id),
+        //     ))
+        // } else {
+        //     None
+        // };
 
-        // Get the Chain ID. If None, set to 1
-        let chain_id = chain_id.unwrap_or(1);
-
-        // Check if we have a private key to set up a Signer
-        let signer = if let Some(private_key) = &private_key {
-            let wallet = private_key
-                .parse::<LocalWallet>()
-                .expect("Failed to parse private key");
-            Some(SignerMiddleware::new(
-                provider.clone(),
-                wallet.with_chain_id(chain_id),
-            ))
-        } else {
-            None
-        };
-
+        let provider = Arc::new(provider);
         // Check if we have a contract address to set up a Contract
         let abi: Abi = serde_json::from_str(&BANYAN_ABI_STR_REF).expect("Failed to parse ABI");
         let contract = Contract::new(contract_address, abi, provider.clone());
@@ -136,17 +95,8 @@ impl EthClient {
         Ok(EthClient {
             provider,
             chain_id,
-            signer,
             contract,
-            //timeout,
         })
-    }
-
-    /* Struct State Methods */
-
-    /// Return whether theres's a signer configured
-    pub fn has_signer(&self) -> bool {
-        self.signer.is_some()
     }
 
     /* Banyan Functions */
@@ -166,7 +116,13 @@ impl EthClient {
     /// #[tokio::main]
     /// async fn main() {
     ///     let file = std::fs::File::open("./abi/escrow.json").unwrap();
-    ///     let client = EthClient::default();
+    ///
+    ///     let provider = Provider::<Http>::try_from("https://mainnet.infura.io/v3/",)
+    ///         .expect("could not instantiate HTTP Provider");
+    ///     let contract_addr =
+    ///         Address::from_str("0x0000000000000000000000000000000000000000").unwrap();
+    ///     // Init a new EthClient with our environment variables
+    ///     let eth_client = EthClient::new(provider, 1, contract_addr).unwrap();
     ///     let deal = DealProposalBuilder::default()
     ///         .with_file(file)
     ///         .build()
@@ -176,29 +132,25 @@ impl EthClient {
     /// ```
     /// # Panics
     /// * If the Deal Proposal is invalid
-    /// * If the client is not configured with a signer
-    pub async fn propose_deal(
+    pub async fn propose_deal<S: Signer>(
         &self,
         deal: DealProposal,
         gas_limit: Option<u64>,
         gas_price: Option<u64>,
+        signer: S,
     ) -> Result<DealID, Error> {
-        // TODO: Implement a general purpose wrapper for payable functions
-        if !self.has_signer() {
-            return Err(anyhow!("No signer available"));
-        }
-        // Borrow our signer and contract
-        let signer = self.signer.as_ref().unwrap();
+        let signer_middleware = SignerMiddleware::new(self.provider.clone(), signer);
         // Create a new deal proposal Transaction
         let data = self.contract.encode("startOffer", deal)?;
         let tx = TransactionRequest::new()
             .to(self.contract.address())
             .data(data)
+            // TODO fix how we're doing gas
             .gas(gas_limit.unwrap_or(3_000_000u64)) // 3 million Wei
             .gas_price(gas_price.unwrap_or(70_000_000_000u64)) // 70 Gwei
             .chain_id(self.chain_id);
         // Sign the transaction and listen for the event
-        let pending_tx = match signer.send_transaction(tx, None).await {
+        let pending_tx = match signer_middleware.send_transaction(tx, None).await {
             Ok(tx) => tx,
             Err(e) => {
                 return Err(anyhow!("Error signing transaction: {}", &e.to_string()));
@@ -228,11 +180,11 @@ impl EthClient {
     /// # Returns
     /// * `Deal` - The on chain Deal
     pub async fn get_deal(&self, deal_id: DealID) -> Result<OnChainDealInfo, Error> {
-        Ok(self
+        let contract_call = self
             .contract
-            .method::<_, OnChainDealInfo>("getOffer", deal_id)?
-            .call()
-            .await?)
+            .method::<_, OnChainDealInfo>("getOffer", deal_id)?;
+        let deal = contract_call.call().await?;
+        Ok(deal)
     }
 
     /* Proof Stuff */
@@ -289,17 +241,26 @@ impl EthClient {
 
 #[cfg(test)]
 mod test {
+    use ethers::core::rand::thread_rng;
+    use ethers::prelude::Http;
+    use ethers::prelude::LocalWallet;
+
     use super::*;
+    use std::str::FromStr;
 
     #[tokio::test]
     /// Test Init a new eth client from the environment.
     /// The environment variables for all fields must be set for this test to pass
     async fn eth_client_new() {
+        // make a new provider
+        let provider = Provider::<Http>::try_from(
+            "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27",
+        )
+        .expect("could not instantiate HTTP Provider");
+        let contract_addr =
+            Address::from_str("0x0000000000000000000000000000000000000000").unwrap();
         // Init a new EthClient with our environment variables
-        let eth_client = EthClient::default();
-        if !eth_client.has_signer() {
-            panic!("No signer available!");
-        }
+        let eth_client = EthClient::new(provider, 1, contract_addr).unwrap();
         // Try and get the current block number
         let block_num = eth_client.get_latest_block_num().await.unwrap();
         println!("Latest Block Number: {}", block_num.0);
@@ -316,11 +277,17 @@ mod test {
             .with_file(file)
             .build()
             .unwrap();
+        // make a new provider
+        let provider = Provider::<Http>::try_from("https://mainnet.infura.io/v3/")
+            .expect("could not instantiate HTTP Provider");
+        let contract_addr =
+            Address::from_str("0x0000000000000000000000000000000000000000").unwrap();
         // Init a new EthClient with our environment variables
-        let eth_client = EthClient::default();
+        let eth_client = EthClient::new(provider, 1, contract_addr).unwrap();
+        let wallet = LocalWallet::new(&mut thread_rng());
         // Send the DealProposal
         let deal_id: DealID = eth_client
-            .propose_deal(dp, None, None)
+            .propose_deal(dp, None, None, wallet)
             .await
             .expect("Failed to send deal proposal");
         // Read the deal from the contract
