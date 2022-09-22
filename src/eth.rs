@@ -1,4 +1,4 @@
-use crate::{proofs, types::*};
+use crate::{proofs::{self, gen_proof}, types::*};
 use anyhow::{anyhow, Error, Result};
 use ethers::{
     abi::Abi,
@@ -235,15 +235,15 @@ impl EthClient {
         Ok(DealID(log.offer_id.as_u64()))
     }
 
-    /// get_deal - get a deal from the Ethereum blockchain by its on-chain ID
+    /// get_offer - get a deal from the Ethereum blockchain by its on-chain ID
     /// # Arguments
     /// * `deal_id` - The Deal ID to get
     /// # Returns
     /// * `Deal` - The on chain Deal
-    pub async fn get_deal(&self, deal_id: DealID) -> Result<OnChainDealInfo, Error> {
+    pub async fn get_offer(&self, deal_id: DealID) -> Result<OnChainDealInfo, Error> {
         Ok(self
             .contract
-            .method::<_, OnChainDealInfo>("getDeal", deal_id)?
+            .method::<_, OnChainDealInfo>("getOffer", deal_id)?
             .call()
             .await?)
     }
@@ -481,17 +481,10 @@ impl EthClient {
     ) -> Result<(bao::Hash, Bytes)> {
         file.rewind()?;
         let target_block_hash = self.get_block_hash_from_num(target_window_start).await?;
-        let (chunk_offset, chunk_size) =
-            proofs::compute_random_block_choice_from_hash(target_block_hash, file_length);
-
         let (obao_file, hash) = proofs::gen_obao(file)?;
-        let cursor = Cursor::new(obao_file);
-
-        let mut extractor =
-            bao::encode::SliceExtractor::new_outboard(file, cursor, chunk_offset, chunk_size);
-        let mut slice = Vec::new();
-        extractor.read_to_end(&mut slice)?;
-
+        let obao_cursor = Cursor::new(obao_file);
+        let mut slice: Vec<u8> = gen_proof(target_window_start, target_block_hash, file, obao_cursor, file_length).await.unwrap();
+  
         if !quality {
             let last_index = slice.len() - 1;
             slice[last_index] ^= 1;
@@ -555,7 +548,7 @@ mod test {
             .await
             .expect("Failed to send deal proposal");
         // Read the deal from the contract
-        let _deal = eth_client.get_deal(deal_id).await.unwrap();
+        let deal = eth_client.get_offer(deal_id).await.unwrap();
         // Assert that the deal we read is the same as the one we sent
         assert_eq!(deal.deal_length_in_blocks, BlockNum(10));
         Ok(())
@@ -607,7 +600,7 @@ mod test {
         let mut file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
         let eth_client = EthClient::default();
 
-        let deal = eth_client.get_deal(DealID(1)).await.unwrap();
+        let deal = eth_client.get_offer(DealID(1)).await.unwrap();
 
         let target_window: usize = eth_client
             .compute_target_window(deal.deal_start_block, deal.proof_frequency_in_blocks)
@@ -650,7 +643,7 @@ mod test {
         let mut file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
         let eth_client = EthClient::default();
 
-        let deal = eth_client.get_deal(DealID(1)).await.unwrap();
+        let deal = eth_client.get_offer(DealID(1)).await.unwrap();
 
         let target_window: usize = eth_client
             .compute_target_window(deal.deal_start_block, deal.proof_frequency_in_blocks)
@@ -686,5 +679,4 @@ mod test {
         );
         Ok(())
     }
-
 }

@@ -5,7 +5,7 @@ use anyhow::Result;
 use bao::encode::SliceExtractor;
 use ethers::abi::ethereum_types::BigEndianHash;
 use ethers::prelude::H256;
-use std::io::{Read, Seek};
+use std::io::{Read, Seek, Cursor};
 
 /// 1024 bytes per bao chunk
 const CHUNK_SIZE: u64 = 1024;
@@ -41,7 +41,7 @@ pub async fn gen_proof<R: Read + Seek>(
     _block_number: BlockNum,
     block_hash: H256,
     file_handle: R,
-    obao_handle: R,
+    obao_handle: Cursor<Vec<u8>>,
     file_length: u64,
 ) -> Result<Vec<u8>> {
     let (chunk_offset, chunk_size) = compute_random_block_choice_from_hash(block_hash, file_length);

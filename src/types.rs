@@ -8,7 +8,7 @@ use ethers::{
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sled::IVec;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Rem, Sub};
 
 /// A Wrapper around the CID struct from the cid crate
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -268,7 +268,7 @@ impl Mul<f64> for TokenMultiplier {
         if amount == 0 {
             U256::from(1) // This is the smallest a U256 can be
         } else {
-            TokenAmount(amount)
+            U256::from(amount)
         }
     }
 }
