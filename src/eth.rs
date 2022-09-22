@@ -180,11 +180,9 @@ impl<P: JsonRpcClient + 'static> EthClient<P> {
     /// # Returns
     /// * `Deal` - The on chain Deal
     pub async fn get_deal(&self, deal_id: DealID) -> Result<OnChainDealInfo, Error> {
-        let contract_call = self
+        Ok(self
             .contract
-            .method::<_, OnChainDealInfo>("getOffer", deal_id)?;
-        let deal = contract_call.call().await?;
-        Ok(deal)
+            .method::<_, OnChainDealInfo>("getOffer", deal_id)?.call().await?)
     }
 
     /* Proof Stuff */
