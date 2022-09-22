@@ -1,4 +1,7 @@
-use crate::{proofs::{self, gen_proof}, types::*};
+use crate::{
+    proofs::{self, gen_proof},
+    types::*,
+};
 use anyhow::{anyhow, Error, Result};
 use ethers::{
     abi::Abi,
@@ -483,8 +486,16 @@ impl EthClient {
         let target_block_hash = self.get_block_hash_from_num(target_window_start).await?;
         let (obao_file, hash) = proofs::gen_obao(file)?;
         let obao_cursor = Cursor::new(obao_file);
-        let mut slice: Vec<u8> = gen_proof(target_window_start, target_block_hash, file, obao_cursor, file_length).await.unwrap();
-  
+        let mut slice: Vec<u8> = gen_proof(
+            target_window_start,
+            target_block_hash,
+            file,
+            obao_cursor,
+            file_length,
+        )
+        .await
+        .unwrap();
+
         if !quality {
             let last_index = slice.len() - 1;
             slice[last_index] ^= 1;

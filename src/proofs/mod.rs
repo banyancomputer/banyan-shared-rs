@@ -5,7 +5,7 @@ use anyhow::Result;
 use bao::encode::SliceExtractor;
 use ethers::abi::ethereum_types::BigEndianHash;
 use ethers::prelude::H256;
-use std::io::{Read, Seek, Cursor};
+use std::io::{Cursor, Read, Seek};
 
 /// 1024 bytes per bao chunk
 const CHUNK_SIZE: u64 = 1024;
