@@ -517,3 +517,11 @@ pub enum ProofBuddyMessageType {
     InitiateChainlinkFinalization,
     WithdrawEarnings,
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_tokenize_for_onchaindealinfo() {
+        unimplemented!("do it");
+    }
+}

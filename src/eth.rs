@@ -691,3 +691,11 @@ mod test {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn oh_my_god_this_needs_tests() {
+        unimplemented!("do it");
+    }
+}
