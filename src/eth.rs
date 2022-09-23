@@ -56,6 +56,8 @@ impl<P: JsonRpcClient + 'static> EthClient<P> {
     /// ```no_run
     /// use banyan_shared::eth::EthClient;
     /// use ethers::types::Address;
+    /// use std::str::FromStr;
+    /// use ethers::providers::{Provider, Http};
     ///
     /// let provider = Provider::<Http>::try_from("https://mainnet.infura.io/v3/",)
     ///     .expect("could not instantiate HTTP Provider");
@@ -112,6 +114,9 @@ impl<P: JsonRpcClient + 'static> EthClient<P> {
     /// ```no_run
     /// use banyan_shared::eth::EthClient;
     /// use banyan_shared::deals::*;
+    /// use ethers::types::Address;
+    /// use std::str::FromStr;
+    /// use ethers::providers::{Provider, Http};
     ///
     /// #[tokio::main]
     /// async fn main() {
