@@ -6,15 +6,43 @@ use bao::encode::SliceExtractor;
 use cid::Cid;
 use ethers::abi::ethereum_types::BigEndianHash;
 use ethers::prelude::H256;
-use std::{io::{Cursor, Read, Seek, Write}, fs::File};
+use std::{io::{Cursor, Read, Seek, Write, SeekFrom}};
 
-use ipfs_api::{request::Ls, response::LsResponse, ApiError, BackendWithGlobalOptions, Error as IpfsError,
-    GlobalOptions, IpfsApi, IpfsClient};
+use ipfs_api::{IpfsApi, IpfsClient};
 use futures::TryStreamExt;
 
 /// 1024 bytes per bao chunk
 const CHUNK_SIZE: u64 = 1024;
 const DAG_BLOCK_SIZE: usize = 256000; // 256kb
+
+struct FakeSeeker<R: Read> {
+    reader: R,
+    bytes_read: u64,
+}
+
+impl<R: Read> FakeSeeker<R> {
+    fn new(reader: R) -> Self {
+        Self {
+            reader,
+            bytes_read: 0,
+        }
+    }
+}
+
+impl<R: Read> Read for FakeSeeker<R> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let n = self.reader.read(buf)?;
+        self.bytes_read += n as u64;
+        Ok(n)
+    }
+}
+
+impl<R: Read> Seek for FakeSeeker<R> {
+    fn seek(&mut self, _: SeekFrom) -> std::io::Result<u64> {
+        // Do nothing and return the current position.
+        Ok(self.bytes_read)
+    }
+}
 
 fn get_num_chunks(size: u64) -> u64 {
     (size as f32 / CHUNK_SIZE as f32).ceil() as u64
@@ -43,25 +71,8 @@ pub fn gen_obao<R: Read>(reader: &mut R) -> Result<(Vec<u8>, bao::Hash)> {
     Ok((obao, hash)) // return the outboard encoding
 }
 
-pub fn gen_obao_incremental<R: Read + Seek>(reader: &mut R) -> Result<(Vec<u8>, bao::Hash)> {
-
-    let mut encoded_incrementally = Vec::new();
-    let encoded_cursor = std::io::Cursor::new(&mut encoded_incrementally);
-    let mut encoder = bao::encode::Encoder::new_outboard(encoded_cursor);
-
-    loop {
-        let mut buffer = [0; CHUNK_SIZE as usize];
-        let bytes_read = reader.read(&mut buffer)?;
-        if bytes_read == 0 {
-            break;
-        }
-        encoder.write_all(&buffer[..bytes_read])?;
-    }
-    let hash = encoder.finalize()?;
-    Ok((encoded_incrementally, hash)) // return the outboard encoding   
-}
-
 // TODO Is there a more efficient solution to this than reading Block by Block? I think this is good but maybe not ... 
+// Freeing bytes_read from memory? 
 pub async fn gen_obao_ipfs(cid: Cid) -> Result<(Vec<u8>, bao::Hash)> {
     let mut encoded_incrementally = Vec::new();
     let encoded_cursor = std::io::Cursor::new(&mut encoded_incrementally);
@@ -75,7 +86,6 @@ pub async fn gen_obao_ipfs(cid: Cid) -> Result<(Vec<u8>, bao::Hash)> {
             .try_concat()
             .await?;
         let bytes_read = bytes.len();
-        println!("bytes_read: {}", bytes_read);
         if bytes_read == 0 {
             break;
         }
@@ -101,9 +111,38 @@ pub async fn gen_proof<R: Read + Seek>(
     Ok(bao_proof_data)
 }
 
+// TODO Is there a situation where we are reading more than one chunk from the file in our proof? In our current construct, I think 
+// not. Thats because we choose start points that are multiples of the chunk size and limit the length of the proof to the chunk size.
+/// This function is used to generate a proof for a file that is stored on IPFS.
+pub async fn gen_proof_ipfs (
+    block_hash: H256,
+    cid: Cid,
+    obao_handle: Cursor<Vec<u8>>,
+    file_length: u64,
+) -> Result<Vec<u8>> {
+    let (chunk_offset, chunk_size) = compute_random_block_choice_from_hash(block_hash, file_length);
+    let client = IpfsClient::default();
+    let bytes = client
+            .cat_range(&cid.to_string(), chunk_offset.try_into().unwrap(), chunk_size.try_into().unwrap())
+            .map_ok(|chunk| chunk.to_vec())
+            .try_concat()
+            .await?;
+    
+    let mut bao_proof_data = vec![];
+    let _ = SliceExtractor::new_outboard(
+        FakeSeeker::new(&*bytes),
+        obao_handle,
+        chunk_offset.try_into().unwrap(),
+        chunk_size
+    )
+        .read_to_end(&mut bao_proof_data)?;
+    Ok(bao_proof_data)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::fs::File;
 
     #[tokio::test]
 
@@ -118,6 +157,4 @@ mod test {
         assert_eq!(obao, obao_ipfs);
         Ok(())
     }
-    
-
 }

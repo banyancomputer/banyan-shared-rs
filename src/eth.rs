@@ -524,6 +524,8 @@ impl EthClient {
 
 #[cfg(test)]
 mod test {
+    use crate::proofs::gen_proof_ipfs;
+
     use super::*;
 
     #[tokio::test]
@@ -695,7 +697,6 @@ mod test {
     #[tokio::test]
     async fn check_good_proof_ipfs() -> Result<(), anyhow::Error> {
         
-        let file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
         let eth_client = EthClient::default();
         let deal = eth_client.get_offer(DealID(1)).await.unwrap();
 
@@ -715,25 +716,72 @@ mod test {
         let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
         let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
         let obao_cursor = Cursor::new(obao_file);
-        let slice: Vec<u8> = gen_proof(
-            target_block,
+        let proof: Vec<u8> = gen_proof_ipfs(
             target_block_hash,
-            file,
+            cid,
             obao_cursor,
             deal.file_size.as_u64()
         )
             .await
             .unwrap();
-        let proof = Bytes::from(slice);
         let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
             target_block_hash,
             deal.file_size.as_u64(),
         );
-        let proof_vec = proof.to_vec();
         assert_eq!(
             true,
             EthClient::check_if_merkle_proof_is_valid(
-                Cursor::new(&proof_vec),
+                Cursor::new(&proof),
+                hash,
+                chunk_offset,
+                chunk_size,
+            )?
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn check_bad_proof_ipfs() -> Result<(), anyhow::Error> {
+        let eth_client = EthClient::default();
+        let deal = eth_client.get_offer(DealID(1)).await.unwrap();
+
+        let target_window: usize = eth_client
+            .compute_target_window(deal.deal_start_block, deal.proof_frequency_in_blocks)
+            .await
+            .expect("Failed to compute target window");
+
+        let target_block = EthClient::compute_target_block_start(
+            deal.deal_start_block,
+            deal.proof_frequency_in_blocks,
+            target_window,
+        );
+        // create a proof using the same file we used to create the deal
+        let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
+        let cid = Cid::try_from(root)?;
+        let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
+        let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
+        let obao_cursor = Cursor::new(obao_file);
+        let mut proof: Vec<u8> = gen_proof_ipfs(
+            target_block_hash,
+            cid,
+            obao_cursor,
+            deal.file_size.as_u64()
+        )
+            .await
+            .unwrap();
+
+        
+        let last_index = proof.len() - 1;
+        proof[last_index] ^= 1;
+    
+        let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
+            target_block_hash,
+            deal.file_size.as_u64(),
+        );
+        assert_eq!(
+            false,
+            EthClient::check_if_merkle_proof_is_valid(
+                Cursor::new(&proof),
                 hash,
                 chunk_offset,
                 chunk_size,
