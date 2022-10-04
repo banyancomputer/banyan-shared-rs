@@ -3,6 +3,7 @@ use crate::{
     types::*,
 };
 use anyhow::{anyhow, Error, Result};
+use cid::Cid;
 use ethers::{
     abi::Abi,
     contract::Contract,
@@ -477,17 +478,17 @@ impl EthClient {
     /// * `quality` - Whether or not the proof is correct or incorrect
     pub async fn create_proof_helper(
         &self,
-        target_window_start: BlockNum,
+        target_block_start: BlockNum,
         file: &mut File,
         file_length: u64,
         quality: bool,
     ) -> Result<(bao::Hash, Bytes)> {
         file.rewind()?;
-        let target_block_hash = self.get_block_hash_from_num(target_window_start).await?;
+        let target_block_hash = self.get_block_hash_from_num(target_block_start).await?;
         let (obao_file, hash) = proofs::gen_obao(file)?;
         let obao_cursor = Cursor::new(obao_file);
         let mut slice: Vec<u8> = gen_proof(
-            target_window_start,
+            target_block_start,
             target_block_hash,
             file,
             obao_cursor,
@@ -681,6 +682,56 @@ mod test {
         let proof_vec = proof.to_vec();
         assert_eq!(
             false,
+            EthClient::check_if_merkle_proof_is_valid(
+                Cursor::new(&proof_vec),
+                hash,
+                chunk_offset,
+                chunk_size,
+            )?
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn check_good_proof_ipfs() -> Result<(), anyhow::Error> {
+        
+        let file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
+        let eth_client = EthClient::default();
+        let deal = eth_client.get_offer(DealID(1)).await.unwrap();
+
+        let target_window: usize = eth_client
+            .compute_target_window(deal.deal_start_block, deal.proof_frequency_in_blocks)
+            .await
+            .expect("Failed to compute target window");
+
+        let target_block = EthClient::compute_target_block_start(
+            deal.deal_start_block,
+            deal.proof_frequency_in_blocks,
+            target_window,
+        );
+        // create a proof using the same file we used to create the deal
+        let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
+        let cid = Cid::try_from(root)?;
+        let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
+        let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
+        let obao_cursor = Cursor::new(obao_file);
+        let slice: Vec<u8> = gen_proof(
+            target_block,
+            target_block_hash,
+            file,
+            obao_cursor,
+            deal.file_size.as_u64()
+        )
+            .await
+            .unwrap();
+        let proof = Bytes::from(slice);
+        let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
+            target_block_hash,
+            deal.file_size.as_u64(),
+        );
+        let proof_vec = proof.to_vec();
+        assert_eq!(
+            true,
             EthClient::check_if_merkle_proof_is_valid(
                 Cursor::new(&proof_vec),
                 hash,
