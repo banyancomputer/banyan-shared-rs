@@ -6,10 +6,10 @@ use bao::encode::SliceExtractor;
 use cid::Cid;
 use ethers::abi::ethereum_types::BigEndianHash;
 use ethers::prelude::H256;
-use std::{io::{Cursor, Read, Seek, Write, SeekFrom}};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use ipfs_api::{IpfsApi, IpfsClient};
 use futures::TryStreamExt;
+use ipfs_api::{IpfsApi, IpfsClient};
 
 /// 1024 bytes per bao chunk
 const CHUNK_SIZE: u64 = 1024;
@@ -71,8 +71,8 @@ pub fn gen_obao<R: Read>(reader: &mut R) -> Result<(Vec<u8>, bao::Hash)> {
     Ok((obao, hash)) // return the outboard encoding
 }
 
-// TODO Is there a more efficient solution to this than reading Block by Block? I think this is good but maybe not ... 
-// Freeing bytes_read from memory? 
+// TODO Is there a more efficient solution to this than reading Block by Block? I think this is good but maybe not ...
+// Freeing bytes_read from memory?
 pub async fn gen_obao_ipfs(cid: Cid) -> Result<(Vec<u8>, bao::Hash)> {
     let mut encoded_incrementally = Vec::new();
     let encoded_cursor = std::io::Cursor::new(&mut encoded_incrementally);
@@ -81,7 +81,7 @@ pub async fn gen_obao_ipfs(cid: Cid) -> Result<(Vec<u8>, bao::Hash)> {
     let mut offset = 0;
     loop {
         let bytes = client
-            .cat_range(&cid.to_string(),offset, DAG_BLOCK_SIZE)
+            .cat_range(&cid.to_string(), offset, DAG_BLOCK_SIZE)
             .map_ok(|chunk| chunk.to_vec())
             .try_concat()
             .await?;
@@ -93,7 +93,7 @@ pub async fn gen_obao_ipfs(cid: Cid) -> Result<(Vec<u8>, bao::Hash)> {
         offset += bytes_read;
     }
     let hash = encoder.finalize()?;
-    Ok((encoded_incrementally, hash)) 
+    Ok((encoded_incrementally, hash))
 }
 
 pub async fn gen_proof<R: Read + Seek>(
@@ -111,10 +111,10 @@ pub async fn gen_proof<R: Read + Seek>(
     Ok(bao_proof_data)
 }
 
-// TODO Is there a situation where we are reading more than one chunk from the file in our proof? In our current construct, I think 
+// TODO Is there a situation where we are reading more than one chunk from the file in our proof? In our current construct, I think
 // not. Thats because we choose start points that are multiples of the chunk size and limit the length of the proof to the chunk size.
 /// This function is used to generate a proof for a file that is stored on IPFS.
-pub async fn gen_proof_ipfs (
+pub async fn gen_proof_ipfs(
     block_hash: H256,
     cid: Cid,
     obao_handle: Cursor<Vec<u8>>,
@@ -123,19 +123,23 @@ pub async fn gen_proof_ipfs (
     let (chunk_offset, chunk_size) = compute_random_block_choice_from_hash(block_hash, file_length);
     let client = IpfsClient::default();
     let bytes = client
-            .cat_range(&cid.to_string(), chunk_offset.try_into().unwrap(), chunk_size.try_into().unwrap())
-            .map_ok(|chunk| chunk.to_vec())
-            .try_concat()
-            .await?;
-    
+        .cat_range(
+            &cid.to_string(),
+            chunk_offset.try_into().unwrap(),
+            chunk_size.try_into().unwrap(),
+        )
+        .map_ok(|chunk| chunk.to_vec())
+        .try_concat()
+        .await?;
+
     let mut bao_proof_data = vec![];
     let _ = SliceExtractor::new_outboard(
         FakeSeeker::new(&*bytes),
         obao_handle,
         chunk_offset.try_into().unwrap(),
-        chunk_size
+        chunk_size,
     )
-        .read_to_end(&mut bao_proof_data)?;
+    .read_to_end(&mut bao_proof_data)?;
     Ok(bao_proof_data)
 }
 

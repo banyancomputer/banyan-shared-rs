@@ -3,7 +3,6 @@ use crate::{
     types::*,
 };
 use anyhow::{anyhow, Error, Result};
-use cid::Cid;
 use ethers::{
     abi::Abi,
     contract::Contract,
@@ -527,6 +526,8 @@ mod test {
     use crate::proofs::gen_proof_ipfs;
 
     use super::*;
+    use cid::Cid;
+
 
     #[tokio::test]
     /// Test Init a new eth client from the environment.
@@ -696,7 +697,6 @@ mod test {
 
     #[tokio::test]
     async fn check_good_proof_ipfs() -> Result<(), anyhow::Error> {
-        
         let eth_client = EthClient::default();
         let deal = eth_client.get_offer(DealID(1)).await.unwrap();
 
@@ -716,14 +716,10 @@ mod test {
         let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
         let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
         let obao_cursor = Cursor::new(obao_file);
-        let proof: Vec<u8> = gen_proof_ipfs(
-            target_block_hash,
-            cid,
-            obao_cursor,
-            deal.file_size.as_u64()
-        )
-            .await
-            .unwrap();
+        let proof: Vec<u8> =
+            gen_proof_ipfs(target_block_hash, cid, obao_cursor, deal.file_size.as_u64())
+                .await
+                .unwrap();
         let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
             target_block_hash,
             deal.file_size.as_u64(),
@@ -761,19 +757,14 @@ mod test {
         let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
         let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
         let obao_cursor = Cursor::new(obao_file);
-        let mut proof: Vec<u8> = gen_proof_ipfs(
-            target_block_hash,
-            cid,
-            obao_cursor,
-            deal.file_size.as_u64()
-        )
-            .await
-            .unwrap();
+        let mut proof: Vec<u8> =
+            gen_proof_ipfs(target_block_hash, cid, obao_cursor, deal.file_size.as_u64())
+                .await
+                .unwrap();
 
-        
         let last_index = proof.len() - 1;
         proof[last_index] ^= 1;
-    
+
         let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
             target_block_hash,
             deal.file_size.as_u64(),
