@@ -6,7 +6,8 @@
 
 use anyhow::Result;
 use cid::Cid;
-use futures::{TryStreamExt};
+use futures::executor::{block_on, block_on_stream};
+use futures::TryStreamExt;
 use ipfs_api::{BackendWithGlobalOptions, GlobalOptions, IpfsApi, IpfsClient};
 use std::io::Seek;
 use std::sync::Arc;
@@ -14,9 +15,8 @@ use std::{
     io::{Cursor, Read},
     str::FromStr,
 };
-use futures::executor::{block_on, block_on_stream};
 
-struct IpfsReader {
+pub struct IpfsReader {
     api: Arc<IpfsClient>,
     cid: Cid,
     offset: u64,
@@ -24,7 +24,7 @@ struct IpfsReader {
 }
 
 impl IpfsReader {
-    fn new(api: Arc<IpfsClient>, cid: Cid) -> Result<Self> {
+    pub fn new(api: Arc<IpfsClient>, cid: Cid) -> Result<Self> {
         let length = block_on(api.object_stat(&cid.to_string()))?.cumulative_size;
         Ok(Self {
             api,
@@ -44,13 +44,12 @@ impl Read for IpfsReader {
             self.offset as usize,
             length_to_try as usize,
         ));
-
         let mut bytes_read = 0;
 
         for bytes in bytes_from_ipfs {
             let bytes = bytes.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
             let bytes_len = bytes.len();
-            buf[..bytes_len].copy_from_slice(&bytes);
+            buf[bytes_read..bytes_read + bytes_len].copy_from_slice(&bytes);
             bytes_read += bytes_len;
         }
         self.seek(std::io::SeekFrom::Current(bytes_read as i64))?;
@@ -162,10 +161,13 @@ mod tests {
     use cid::Cid;
     use multihash::Code;
     use multihash::MultihashDigest;
+    use crate::proofs::{gen_obao_ipfs, gen_proof_ipfs};
+    const DAG_BLOCK_SIZE: usize = 256000; // 256kb
 
     #[tokio::test]
     async fn add_and_download_file() -> Result<()> {
         let cid = write_bytes_to_ipfs("hello world!".as_bytes().to_vec()).await?;
+        dbg!(&cid.to_string());
         let file = download_file_from_ipfs(cid).await?;
         assert_eq!(file, "hello world!".as_bytes().to_vec());
         Ok(())
@@ -206,6 +208,20 @@ mod tests {
         unpin_cid(cid).await?;
         let bool = do_we_have_this_cid_locally(cid).await?;
         assert_eq!(bool, false);
+        Ok(())
+    }
+    #[tokio::test]
+    async fn read_file() -> Result<()> {
+        let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
+        let cid = Cid::try_from(root)?;
+        if !(do_we_have_this_cid_locally(cid).await?) {
+            download_and_pin_file_from_ipfs(cid).await?;
+        }
+
+        let (bytes_1, hash_1) = gen_obao_ipfs(cid).await?;
+        dbg!(hash_1);
+        let cid_obao = write_bytes_to_ipfs(bytes_1).await?;
+        dbg!(&cid_obao.to_string());
         Ok(())
     }
 }

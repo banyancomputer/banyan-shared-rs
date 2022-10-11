@@ -524,10 +524,9 @@ impl EthClient {
 #[cfg(test)]
 mod test {
     use crate::proofs::gen_proof_ipfs;
-
+    use crate::ipfs::write_bytes_to_ipfs;
     use super::*;
     use cid::Cid;
-
 
     #[tokio::test]
     /// Test Init a new eth client from the environment.
@@ -712,14 +711,19 @@ mod test {
         );
         // create a proof using the same file we used to create the deal
         let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
-        let cid = Cid::try_from(root)?;
+        let file_cid = Cid::try_from(root)?;
         let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
-        let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
-        let obao_cursor = Cursor::new(obao_file);
-        let proof: Vec<u8> =
-            gen_proof_ipfs(target_block_hash, cid, obao_cursor, deal.file_size.as_u64())
-                .await
-                .unwrap();
+        let (obao_file, hash) = proofs::gen_obao_ipfs(file_cid).await?;
+        let obao_cid = write_bytes_to_ipfs(obao_file).await?;
+
+        let proof: Vec<u8> = gen_proof_ipfs(
+            target_block_hash,
+            file_cid,
+            obao_cid,
+            deal.file_size.as_u64(),
+        )
+        .await
+        .unwrap();
         let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
             target_block_hash,
             deal.file_size.as_u64(),
@@ -753,14 +757,19 @@ mod test {
         );
         // create a proof using the same file we used to create the deal
         let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
-        let cid = Cid::try_from(root)?;
+        let file_cid = Cid::try_from(root)?;
         let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
-        let (obao_file, hash) = proofs::gen_obao_ipfs(cid).await?;
-        let obao_cursor = Cursor::new(obao_file);
-        let mut proof: Vec<u8> =
-            gen_proof_ipfs(target_block_hash, cid, obao_cursor, deal.file_size.as_u64())
-                .await
-                .unwrap();
+        let (obao_file, hash) = proofs::gen_obao_ipfs(file_cid).await?;
+        let obao_cid = write_bytes_to_ipfs(obao_file).await?;
+
+        let mut proof: Vec<u8> = gen_proof_ipfs(
+            target_block_hash,
+            file_cid,
+            obao_cid,
+            deal.file_size.as_u64(),
+        )
+        .await
+        .unwrap();
 
         let last_index = proof.len() - 1;
         proof[last_index] ^= 1;

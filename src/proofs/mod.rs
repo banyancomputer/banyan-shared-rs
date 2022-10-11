@@ -1,15 +1,17 @@
 pub mod window;
 
-use crate::types::*;
-use anyhow::Result;
+use crate::{ipfs::IpfsReader, types::*};
+use anyhow::{anyhow, Result};
 use bao::encode::SliceExtractor;
 use cid::Cid;
 use ethers::abi::ethereum_types::BigEndianHash;
 use ethers::prelude::H256;
-use std::io::{Cursor, Read, Seek, SeekFrom, Write};
+use std::{
+    io::{Cursor, Read, Seek, SeekFrom, Write},
+    sync::Arc,
+};
 
-use futures::TryStreamExt;
-use ipfs_api::{IpfsApi, IpfsClient};
+use ipfs_api::{IpfsClient};
 
 /// 1024 bytes per bao chunk
 const CHUNK_SIZE: u64 = 1024;
@@ -77,20 +79,17 @@ pub async fn gen_obao_ipfs(cid: Cid) -> Result<(Vec<u8>, bao::Hash)> {
     let mut encoded_incrementally = Vec::new();
     let encoded_cursor = std::io::Cursor::new(&mut encoded_incrementally);
     let mut encoder = bao::encode::Encoder::new_outboard(encoded_cursor);
-    let client = IpfsClient::default();
-    let mut offset = 0;
+
+    let client = Arc::new(IpfsClient::default());
+    let mut ipfs_file: IpfsReader = IpfsReader::new(client, cid)?;
     loop {
-        let bytes = client
-            .cat_range(&cid.to_string(), offset, DAG_BLOCK_SIZE)
-            .map_ok(|chunk| chunk.to_vec())
-            .try_concat()
-            .await?;
-        let bytes_read = bytes.len();
+        let mut buf: [u8; DAG_BLOCK_SIZE] = [0; DAG_BLOCK_SIZE];
+        let bytes_read = ipfs_file.read(&mut buf)?;
+        dbg!(bytes_read);
         if bytes_read == 0 {
             break;
         }
-        encoder.write_all(&bytes)?;
-        offset += bytes_read;
+        encoder.write_all(&buf[..bytes_read])?;
     }
     let hash = encoder.finalize()?;
     Ok((encoded_incrementally, hash))
@@ -111,31 +110,32 @@ pub async fn gen_proof<R: Read + Seek>(
     Ok(bao_proof_data)
 }
 
-// TODO Is there a situation where we are reading more than one chunk from the file in our proof? In our current construct, I think
-// not. Thats because we choose start points that are multiples of the chunk size and limit the length of the proof to the chunk size.
-/// This function is used to generate a proof for a file that is stored on IPFS.
+
 pub async fn gen_proof_ipfs(
     block_hash: H256,
-    cid: Cid,
-    obao_handle: Cursor<Vec<u8>>,
+    file_cid: Cid,
+    obao_file: Cursor<Vec<u8>>,
     file_length: u64,
 ) -> Result<Vec<u8>> {
     let (chunk_offset, chunk_size) = compute_random_block_choice_from_hash(block_hash, file_length);
     let client = IpfsClient::default();
-    let bytes = client
-        .cat_range(
-            &cid.to_string(),
-            chunk_offset.try_into().unwrap(),
-            chunk_size.try_into().unwrap(),
-        )
-        .map_ok(|chunk| chunk.to_vec())
-        .try_concat()
-        .await?;
+    //let mut buf = Vec::with_capacity(chunk_size.try_into().unwrap());
+    // length is 0 now and thats fine. 
+    let mut buf: [u8; CHUNK_SIZE as usize] = [0; CHUNK_SIZE as usize];
+    let mut ipfs_file: IpfsReader = IpfsReader::new(Arc::new(client.clone()), file_cid)?;
+    ipfs_file.seek(SeekFrom::Start(chunk_offset))?;
+    let bytes_read = ipfs_file.read(&mut buf)?;
+    if bytes_read != chunk_size as usize {
+        return Err(anyhow!("Bytes read: {:} does not equal chunk size: {:}", bytes_read, chunk_size));
+    }
+    // issue its calling len on the buf and seeing 0 
+    // can I find a way to use a static u8 array? Why cant I just define with size. 
 
+    dbg!(buf.len());
     let mut bao_proof_data = vec![];
     let _ = SliceExtractor::new_outboard(
-        FakeSeeker::new(&*bytes),
-        obao_handle,
+        FakeSeeker::new(&buf[..chunk_size.try_into().unwrap()]),
+        obao_file,
         chunk_offset.try_into().unwrap(),
         chunk_size,
     )
