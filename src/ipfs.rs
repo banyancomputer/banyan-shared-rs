@@ -102,18 +102,6 @@ pub async fn write_bytes_to_ipfs(_bytes: Vec<u8>) -> Result<Cid> {
     Ok(hash)
 }
 
-// TODO: Change ipfs_proof_buddy, since this is not needed if we are just passing ipfs cids to
-// stream files in instead of passing the file handle itself.
-/*
-pub async fn get_handle_for_cid(cid: Cid) -> Result<BufReader<File>> {
-    let bytes = download_file_from_ipfs(cid).await?;
-    let mut file = File::create("banyan_files/".to_owned() + &cid.to_string())?;
-    file.write_all(&bytes)?;
-    let reader = BufReader::new(file);
-    return Ok(reader);
-}
-*/
-
 // Do we have this file pinned
 pub async fn do_we_have_this_cid_locally(cid: Cid) -> Result<bool> {
     let client = IpfsClient::default();

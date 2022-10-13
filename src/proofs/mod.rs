@@ -114,7 +114,7 @@ pub async fn gen_proof<R: Read + Seek>(
 pub async fn gen_proof_ipfs(
     block_hash: H256,
     file_cid: Cid,
-    obao_file: Cursor<Vec<u8>>,
+    obao_cid: Cid,
     file_length: u64,
 ) -> Result<Vec<u8>> {
     let (chunk_offset, chunk_size) = compute_random_block_choice_from_hash(block_hash, file_length);
@@ -128,8 +128,8 @@ pub async fn gen_proof_ipfs(
     if bytes_read != chunk_size as usize {
         return Err(anyhow!("Bytes read: {:} does not equal chunk size: {:}", bytes_read, chunk_size));
     }
-    // issue its calling len on the buf and seeing 0 
-    // can I find a way to use a static u8 array? Why cant I just define with size. 
+  
+    let mut obao_file: IpfsReader = IpfsReader::new(Arc::new(client.clone()), obao_cid)?;
 
     dbg!(buf.len());
     let mut bao_proof_data = vec![];
@@ -149,7 +149,6 @@ mod test {
     use std::fs::File;
 
     #[tokio::test]
-
     async fn compare_obao() -> Result<()> {
         let mut file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
         let (obao, hash) = gen_obao(&mut file).unwrap();
