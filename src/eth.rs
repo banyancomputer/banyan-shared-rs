@@ -409,8 +409,6 @@ impl EthClient {
         let mut a = [0u8; 8];
         a.clone_from_slice(&data[(WORD * 2) - 8..WORD * 2]);
         let data_size = u64::from_be_bytes(a);
-        dbg!("data_size: {:?}", data_size);
-        dbg!("data.len(): {:?}", data.len());
         if data.len() < WORD * 2 + data_size as usize {
             return Ok(None);
         }
@@ -568,6 +566,7 @@ mod test {
         Ok(())
     }
 
+    // Expect this to fail since out of block time range. 
     #[tokio::test]
     async fn post_proof_to_chain() -> Result<(), anyhow::Error> {
         let mut file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
@@ -694,7 +693,7 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn check_good_proof_ipfs() -> Result<(), anyhow::Error> {
         let eth_client = EthClient::default();
         let deal = eth_client.get_offer(DealID(1)).await.unwrap();
@@ -740,7 +739,7 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn check_bad_proof_ipfs() -> Result<(), anyhow::Error> {
         let eth_client = EthClient::default();
         let deal = eth_client.get_offer(DealID(1)).await.unwrap();

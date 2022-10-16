@@ -149,8 +149,13 @@ mod tests {
     use cid::Cid;
     use multihash::Code;
     use multihash::MultihashDigest;
-    use crate::proofs::{gen_obao_ipfs, gen_proof_ipfs};
-    const DAG_BLOCK_SIZE: usize = 256000; // 256kb
+    use crate::{
+        proofs::{self},
+        types::*,
+        eth::{EthClient},
+        ipfs::{write_bytes_to_ipfs},
+    };
+    use anyhow::Result;
 
     #[tokio::test]
     async fn add_and_download_file() -> Result<()> {
@@ -198,18 +203,63 @@ mod tests {
         assert_eq!(bool, false);
         Ok(())
     }
-    #[tokio::test]
-    async fn read_file() -> Result<()> {
-        let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
-        let cid = Cid::try_from(root)?;
-        if !(do_we_have_this_cid_locally(cid).await?) {
-            download_and_pin_file_from_ipfs(cid).await?;
-        }
 
-        let (bytes_1, hash_1) = gen_obao_ipfs(cid).await?;
-        dbg!(hash_1);
-        let cid_obao = write_bytes_to_ipfs(bytes_1).await?;
-        dbg!(&cid_obao.to_string());
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn add_file_and_read () -> Result<()>
+    {
+        let file = "hello world!".as_bytes().to_vec();
+        let cid = write_bytes_to_ipfs(file).await?;
+        let mut buf: [u8; 12] = [0; 12];
+        let client = Arc::new(IpfsClient::default());
+        let mut ipfs_file: IpfsReader = IpfsReader::new(client, cid)?;
+        ipfs_file.read(&mut buf)?;
+        assert_eq!(buf, "hello world!".as_bytes());
+        Ok(())
+    } 
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn ethereum_proof() -> Result<()> {
+        let eth_client = EthClient::default();
+        let deal = eth_client.get_offer(DealID(1)).await.unwrap();
+
+        let target_window: usize = eth_client
+            .compute_target_window(deal.deal_start_block, deal.proof_frequency_in_blocks)
+            .await
+            .expect("Failed to compute target window");
+
+        let target_block = EthClient::compute_target_block_start(
+            deal.deal_start_block,
+            deal.proof_frequency_in_blocks,
+            target_window,
+        );
+
+        let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
+        let file_cid = Cid::try_from(root)?;
+        let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
+        let (obao_file, hash) = proofs::gen_obao_ipfs(file_cid).await?;
+        let obao_cid = write_bytes_to_ipfs(obao_file).await?;
+
+        let proof: Vec<u8> = proofs::gen_proof_ipfs(
+            target_block_hash,
+            file_cid,
+            obao_cid,
+            deal.file_size.as_u64(),
+        )
+            .await
+            .unwrap();
+        let (chunk_offset, chunk_size) = proofs::compute_random_block_choice_from_hash(
+            target_block_hash,
+            deal.file_size.as_u64(),
+        );
+        assert_eq!(
+            true,
+            EthClient::check_if_merkle_proof_is_valid(
+                Cursor::new(&proof),
+                hash,
+                chunk_offset,
+                chunk_size,
+            )?
+        );
         Ok(())
     }
 }

@@ -129,7 +129,7 @@ pub async fn gen_proof_ipfs(
         return Err(anyhow!("Bytes read: {:} does not equal chunk size: {:}", bytes_read, chunk_size));
     }
   
-    let mut obao_file: IpfsReader = IpfsReader::new(Arc::new(client.clone()), obao_cid)?;
+    let obao_file: IpfsReader = IpfsReader::new(Arc::new(client.clone()), obao_cid)?;
 
     dbg!(buf.len());
     let mut bao_proof_data = vec![];
@@ -147,6 +147,10 @@ pub async fn gen_proof_ipfs(
 mod test {
     use super::*;
     use std::fs::File;
+    use crate::{
+        eth::EthClient,
+        ipfs::write_bytes_to_ipfs,
+    };
 
     #[tokio::test]
     async fn compare_obao() -> Result<()> {
@@ -158,6 +162,37 @@ mod test {
         let (obao_ipfs, hash_ipfs) = gen_obao_ipfs(cid).await.unwrap();
         assert_eq!(hash, hash_ipfs);
         assert_eq!(obao, obao_ipfs);
+        Ok(())
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn compare_proofs() -> Result<()> {
+        let eth_client = EthClient::default();
+        let deal = eth_client.get_offer(DealID(1)).await.unwrap();
+        let target_window: usize = eth_client
+            .compute_target_window(deal.deal_start_block, deal.proof_frequency_in_blocks)
+            .await
+            .expect("Failed to compute target window");
+
+        let target_block = EthClient::compute_target_block_start(
+            deal.deal_start_block,
+            deal.proof_frequency_in_blocks,
+            target_window,
+        );
+        let target_block_hash = eth_client.get_block_hash_from_num(target_block).await?;
+
+        let mut file = File::open("../Rust-Chainlink-EA-API/test_files/ethereum.pdf").unwrap();
+        let (obao, _hash) = gen_obao(&mut file).unwrap();
+        let obao_cursor = Cursor::new(obao);
+        let proof = gen_proof(target_block, target_block_hash, file, obao_cursor, deal.file_size.as_u64()).await.unwrap();
+
+        let root = "Qmd63gzHfXCsJepsdTLd4cqigFa7SuCAeH6smsVoHovdbE";
+        let cid = Cid::try_from(root)?;
+        let (obao_ipfs, _hash_ipfs) = gen_obao_ipfs(cid).await.unwrap();
+        let obao_cid = write_bytes_to_ipfs(obao_ipfs).await?;
+
+        let proof_ipfs = gen_proof_ipfs(target_block_hash, cid, obao_cid, deal.file_size.as_u64()).await.unwrap();
+        assert_eq!(proof, proof_ipfs);
         Ok(())
     }
 }
